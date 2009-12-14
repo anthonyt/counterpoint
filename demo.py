@@ -10,18 +10,22 @@ from mingus.extra.LilyPond import from_Composition, to_png, to_pdf
 class Soprano(Instrument):
     name = u'Soprano'
     range = (Note('C', 4), Note('C', 6))
+    clef = 'treble'
 
 class Alto(Instrument):
     name = u'Alto'
     range = (Note('F', 3), Note('F', 5))
+    clef = 'treble'
 
 class Tenor(Instrument):
     name = u'Tenor'
     range = (Note('C', 3), Note('C', 5))
+    clef = 'tenor'
 
 class Bass(Instrument):
     name = u'Bass'
     range = (Note('E', 2), Note('E', 4))
+    clef = 'bass'
 
 # Set up our vocal 'tracks'
 sopranoTrack = Track(instrument=Soprano())
@@ -29,49 +33,99 @@ altoTrack = Track(instrument=Alto())
 tenorTrack = Track(instrument=Tenor())
 bassTrack = Track(instrument=Bass())
 
+# First Species Canti Firmi:
+cf_1 = [
+    ('C-4', 1),
+    ('D-4', 1),
+    ('F-4', 1),
+    ('E-4', 1),
+    ('A-4', 1),
+    ('G-4', 1),
+    ('F-4', 1),
+    ('E-4', 1),
+    ('D-4', 1),
+    ('C-4', 1)
+]
+
+harm_1 = [
+    ('C-5', 1),
+    ('B-4', 1),
+    ('A-4', 1),
+    ('B-4', 1),
+    ('C-5', 1),
+    ('D-5', 1),
+    ('D-5', 1),
+    ('A-4', 1),
+    ('B-4', 1),
+    ('C-5', 1)
+]
+
+cf_2 = [
+    ('C-4', 1),
+    ('D-4', 1),
+    ('F-4', 1),
+    ('E-4', 1),
+    ('F-4', 1),
+    ('G-4', 1),
+    ('A-4', 1),
+    ('G-4', 1),
+    ('E-4', 1),
+    ('D-4', 1),
+    ('C-4', 1)
+]
+
+cf_3 = [
+    ('C-4', 1),
+    ('G-3', 1),
+    ('A-3', 1),
+    ('B-3', 1),
+    ('C-4', 1),
+    ('D-4', 1),
+    ('E-4', 1),
+    ('D-4', 1),
+    ('C-4', 1)
+]
+
+cf_4 = [
+    ('D-4', 1),
+    ('F-4', 1),
+    ('E-4', 1),
+    ('D-4', 1),
+    ('G-4', 1),
+    ('F-4', 1),
+    ('A-4', 1),
+    ('G-4', 1),
+    ('F-4', 1),
+    ('E-4', 1),
+    ('D-4', 1)
+]
+
+# Add the notes/durations to the appropriate vocal tracks
+key = 'C'
+meter = (4, 4)
+
+# name our vocal tracks something useful
+# cf = cantus firmus
+# ctp = counterpoint
+cf_track = altoTrack
+ctp_track = sopranoTrack
+
+cf_track.add_bar(Bar(key=key, meter=meter))
+ctp_track.add_bar(Bar(key=key, meter=meter))
+
+for x in cf_1:
+    cf_track.add_notes(*x)
+
+for x in harm_1:
+    ctp_track.add_notes(*x)
+
 # Create a composition, and add the vocal tracks to it.
 myComp = Composition()
 myComp.set_title('Counterpoint Exercise', 'subtitle')
 myComp.set_author('Anthony Theocharis', 'anthony.theocharis@gmail.com')
-for track in [sopranoTrack, altoTrack, tenorTrack, bassTrack]:
+for track in [ctp_track, cf_track]:
     track.name = track.instrument.name
     myComp.add_track(track)
-
-# Definition of a tenor melody - one bar per line.
-tenorLine = [
-    ('E-4', 1),
-    ('F-4', 3), ('E-4', 3), ('F-4', 3),
-    ('F#-4', 2), ('G-4', 2),
-    ('G#-4', 1)
-]
-
-# Definition of a bass line - one bar per line.
-bassLine = [
-    ('E-3', 2), ('D-3', 2),
-    ('C-3', 1),
-    ('B-2', 2), ('G-2', 2),
-    ('E-2', 1)
-]
-
-# Add the notes/durations to the appropriate vocal tracks
-for x in tenorLine:
-    tenorTrack.add_notes(*x)
-for x in bassLine:
-    bassTrack.add_notes(*x)
-
-# Brief printout/analysis of notes that sound together
-for track in myComp.tracks:
-    print track
-print ""
-
-for i in range(0, len(tenorTrack.bars)):
-    t = tenorTrack.bars[i]
-    b = bassTrack.bars[i]
-    for x in t:
-        print 'Tenor Notes:', x
-        print 'Simultaneously Sounding Bass Notes:', b.get_notes_playing_at(x[0])
-        print 'Simultaneously Starting Bass Notes:', b.get_notes_starting_at(x[0])
-        print ""
 
 # Save the midi file!
 write_Composition('demo.mid', myComp, verbose=True)
