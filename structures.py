@@ -92,6 +92,12 @@ class NoteList(object):
                 return note
         return None
 
+    def get_note_playing_at(self, bar, beat):
+        for n in self.notes:
+            if n.bar == bar and n.beat <= beat and n.end[1] > beat:
+                return n
+        return None
+
     def __repr__(self):
         return "<NoteList %r>" % (self.notes)
 
