@@ -163,7 +163,77 @@ MIDI_to_Composition(file):
 """
 
 
-def all_notes_line_up(cf_track, ctp_track):
+class NoteNode(Note):
+    prev = None
+    next = None
+
+    bar = 0
+    beat = 0
+    duration = 0
+
+    def __init__(self, noteContainer, bar, beat, duration):
+        # assume the notecontainer has at least one note in it.
+        note = noteContainer[0]
+        self.bar = bar
+        self.beat = beat
+        self.duration = duration
+        Note.__init__(self, note)
+
+    def __repr__(self):
+        name = Note.__repr__(self)
+        return "<NoteNode %s, %d, %0.2f, %d>" % (name, self.bar, self.beat, self.duration)
+
+class NoteList(object):
+    notes = None
+    track = None
+
+    def __init__(self, track):
+        self.notes = []
+        self.track = track
+
+        bars = track.bars
+        for i in range(0, len(bars)):
+            bar = bars[i]
+            for n in bar:
+                beat, duration, noteContainer = n
+                note = NoteNode(noteContainer, i, beat, duration)
+                self.append(note)
+
+    def append(self, note):
+        if len(self.notes):
+            note.prev = self.notes[-1]
+            self.notes[-1].next = note
+        self.notes.append(note)
+
+    def get(self, bar, beat):
+        for note in self.notes:
+            if note.bar == bar and note.beat == beat:
+                return note
+        return None
+
+    def __repr__(self):
+        return "<NoteList %r>" % (self.notes)
+
+    def __getitem__(self, index):
+        return self.notes[index]
+
+    def __len__(self):
+        return len(self.notes)
+
+def createNoteLists(composition):
+    lists = {}
+    for track in composition:
+        lists[track.name] = NoteList(track)
+
+    return lists
+
+l = createNoteLists(myComp)
+for x in l:
+    print x
+    for note in l[x]:
+        print note
+
+def all_notes_line_up(cf_list, ctp_list):
     """Counterpoint moves with same rhythm as cantus-firmus (note for note)
 
     We check this by ensuring that no note in either track starts without
@@ -171,49 +241,33 @@ def all_notes_line_up(cf_track, ctp_track):
 
     Returns a tuple (num errors, unmatched notes in CF, unmatched notes in CTP)
     """
-    def get_concurrent_bars(track_a, track_b):
-        if len(track_a.bars) != len(track_b.bars):
-            raise Exception('Tracks are not of the same length')
+    def has_matching_note(note, list, offset):
+        for x in list[offset:]:
+            if x.bar > note.bar:
+                return False, offset
+            offset += 1
+            if x.beat == note.beat \
+            and x.duration == note.duration:
+                return True, offset
+        return False, offset
 
-        for i in range(0, len(track_a.bars)):
-            a = track_a.bars[i]
-            b = track_b.bars[i]
-            if a.meter != b.meter:
-                raise Exception("Bars at index %d don't have the same meter.")
-
-            yield a, b
-
-    def bar_has_matching_note(bar, start, dur):
-        for y in bar:
-            if y[0] == start and y[1] == dur:
-                return True
-        return False
-
-    def find_unmatched_notes(bar_a, bar_b):
+    def a_n_l_u(a_list, b_list):
         unmatched = []
-        for x in bar_a:
-            start = x[0]
-            dur = x[1]
-            if not bar_has_matching_note(bar_b, start, dur):
-                unmatched.append(x)
-
+        i = 0
+        for a_note in a_list:
+            has_match, i = has_matching_note(a_note, b_list, i)
+            if not has_match:
+                errors += 1
+                unmatched.append(a_note)
         return unmatched
 
-    cf_unmatched = []
-    ctp_unmatched = []
-    errors = 0
-    for cf_bar, ctp_bar in get_concurrent_bars(cf_track, ctp_track):
-        un = find_unmatched_notes(cf_bar, ctp_bar)
-        errors += len(un)
-        cf_unmatched.append(un)
+    unmatched_cf = a_n_l_u(cf_list, ctp_list)
+    unmatched_ctp = a_n_l_u(ctp_list, cf_list)
+    errors = len(unmatched_cf) + len(unmatched_ctp)
 
-        un = find_unmatched_notes(ctp_bar, cf_bar)
-        errors += len(un)
-        ctp_unmatched.append(un)
+    return errors, unmatched_cf, unmatched_ctp
 
-    return errors, cf_unmatched, ctp_unmatched
-
-a, b, c = all_notes_line_up(cf_track, ctp_track)
+a, b, c = all_notes_line_up(l['Soprano'], l['Alto'])
 print a, 'unmatched notes'
 print b
 print c
@@ -221,8 +275,6 @@ print c
 string = from_Composition(myComp)
 print string
 to_png(string, 'demo.png')
-
-
 
 """
 Methods we need on each note:
