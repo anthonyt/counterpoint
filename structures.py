@@ -42,6 +42,28 @@ class NoteNode(Note):
         name = Note.__repr__(self)
         return "<NoteNode %s, %d, %0.2f, %d>" % (name, self.bar, self.beat, self.duration)
 
+    def __eq__(self, other):
+        return self is other
+
+    @property
+    def start(self):
+        return (self.bar, self.beat)
+
+    @property
+    def end(self):
+        return (self.bar, self.beat + 1./self.duration)
+
+    @property
+    def pitch_end(self):
+        # when does this pitch end?
+        # NB: this method treats all consecutive identical pitches as
+        #     one long tied note.
+        cur = self
+        while cur.next is not None and int(cur.next) == int(self):
+            cur = cur.next
+        end_beat = cur.beat + 1./cur.duration
+        return (cur.bar, end_beat)
+
 class NoteList(object):
     notes = None
     track = None
