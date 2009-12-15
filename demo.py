@@ -129,6 +129,29 @@ errors, unmatched_sop, unmatched_alto = \
 
 print errors, 'unmatched notes'
 
+print 'intervals      ', find_intervals(note_lists['Soprano'], note_lists['Alto'])
+print 'directions sop ', find_directions(note_lists['Soprano'], find_changes(note_lists['Soprano'], []))
+print 'directions alt ', find_directions(note_lists['Alto'], find_changes(note_lists['Alto'], []))
+print 'maxima sop     ', find_local_maxima(note_lists['Soprano'])
+print 'maxima alt     ', find_local_maxima(note_lists['Alto'])
+print 'minima sop     ', find_local_minima(note_lists['Soprano'])
+print 'minima alt     ', find_local_minima(note_lists['Alto'])
+print 'parallels      ', find_parallel_motion(note_lists['Soprano'], note_lists['Alto'])
+print 'parallel ints  ', find_invalid_parallel_intervals(note_lists['Soprano'], note_lists['Alto'])
+print 'parallel consec', find_invalid_consecutive_parallels(note_lists['Soprano'], note_lists['Alto'])
+print 'coincident max ', find_coincident_maxima(note_lists['Soprano'], note_lists['Alto'])
+print 'voice crossing ', find_voice_crossing(note_lists['Alto'], note_lists['Soprano'])
+print 'illegal ints   ', find_illegal_intervals(note_lists['Alto'], note_lists['Soprano'])
+print 'illegal leaps A', find_illegal_leaps(note_lists['Alto'])
+print 'illegal leaps S', find_illegal_leaps(note_lists['Soprano'])
+print 'horizontal Alto', find_horizontal_intervals(note_lists['Alto'])
+print 'horizontal Sop ', find_horizontal_intervals(note_lists['Soprano'])
+print 'indirect Alto  ', find_indirect_horizontal_intervals(note_lists['Alto'])
+print 'indirect Sop   ', find_indirect_horizontal_intervals(note_lists['Soprano'])
+print 'inv indirect A ', find_invalid_indirect_horizontal_intervals(note_lists['Alto'])
+print 'inv indirect S ', find_invalid_indirect_horizontal_intervals(note_lists['Soprano'])
+
+
 """
 Methods we need on each note:
     what is your time signature
