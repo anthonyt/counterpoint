@@ -150,6 +150,8 @@ print 'indirect Alto  ', find_indirect_horizontal_intervals(note_lists['Alto'])
 print 'indirect Sop   ', find_indirect_horizontal_intervals(note_lists['Soprano'])
 print 'inv indirect A ', find_invalid_indirect_horizontal_intervals(note_lists['Alto'])
 print 'inv indirect S ', find_invalid_indirect_horizontal_intervals(note_lists['Soprano'])
+print 'missed turns A ', find_missed_leap_turnarounds(note_lists['Alto'])
+print 'missed turns S ', find_missed_leap_turnarounds(note_lists['Soprano'])
 
 
 """

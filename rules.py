@@ -265,3 +265,45 @@ def find_invalid_indirect_horizontal_intervals(a_list):
     intervals = find_indirect_horizontal_intervals(a_list)
     return filter(lambda x: x[0] not in allowed_intervals, intervals)
 
+def find_missed_leap_turnarounds(a_list):
+    # immediately after a leap of (P5, m6, M6, P8), must move by step (m2, M2)
+    # in opposite direction
+    largest_leap_without_turnaround = 6 # semitones
+
+    # get horizontal intervals as semitones
+    h_i_semitones = [get_semitones(x) for x in find_horizontal_intervals(a_list)]
+
+    # get list of directions for each interval
+    changes = find_changes(a_list, [])
+    dirs = find_directions(a_list, changes)
+    dirs = zip(dirs, changes)
+
+    # figure out if the next movement after this one is a step in the opposite direction
+    def turns_around_after(i):
+        # is this the last interval?
+        leap_dir, leap_time = dirs[i+1]
+        leap_int = h_i_semitones[i]
+
+        while i < len(h_i_semitones):
+            i += 1
+
+            next_dir, next_time = dirs[i+1]
+            next_int = h_i_semitones[i]
+
+            if next_int == 0: # doesn't move yet?
+                continue
+            elif next_dir == -leap_dir and next_int <= 2: # moves by step in opposite dir?
+                return True
+            else: # doesn't move by step in opposite dir :(
+                return False
+        return False
+
+    # find all intervals that qualify as a leap
+    invalid_leaps = [i for i,interval in enumerate(h_i_semitones)
+               if interval > largest_leap_without_turnaround
+               and not turns_around_after(i)]
+
+    # return a list of the beats (notes) that have the leaped-to note
+    # the note following these ones need to move in opposite direction by step
+    return [changes[i+1] for i in invalid_leaps]
+
