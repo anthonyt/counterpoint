@@ -102,8 +102,11 @@ def find_local_minima(a_list):
     prev_d = 0
     prev_t = ()
     for dir, time in dirs:
-        if prev_d == -1 and dir != -1:
-            minima.append(prev_t)
+        if prev_d == -1:
+            if dir == 0:
+                continue
+            if dir == 1:
+                minima.append(prev_t)
         prev_d = dir
         prev_t = time
 
@@ -131,8 +134,11 @@ def find_local_maxima(a_list):
     prev_d = 0
     prev_t = ()
     for dir, time in dirs:
-        if prev_d == 1 and dir != 1:
-            maxima.append(prev_t)
+        if prev_d == 1:
+            if dir == 0:
+                continue
+            if dir == -1:
+                maxima.append(prev_t)
         prev_d = dir
         prev_t = time
 
