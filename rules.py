@@ -2,6 +2,15 @@
 
 from mingus.core import intervals as mintervals
 
+def get_interval(note_a, note_b):
+    name = mintervals.determine(note_a, note_b, True)
+    octave = abs(int(note_a) - int(note_b))/12
+    return (name, octave)
+
+def get_semitones(interval_tuplet):
+    return mintervals.semitones_from_shorthand(interval_tuplet[0]) + 12*interval_tuplet[1]
+
+
 def all_notes_line_up(cf_list, ctp_list):
     """Counterpoint moves with same rhythm as cantus-firmus (note for note)
 
@@ -16,8 +25,8 @@ def all_notes_line_up(cf_list, ctp_list):
     b_list = [x for x in ctp_list] # cast NoteList to list
 
     # remove matched notes
-    for a_note in [x for x in a_list]:
-        for b_note in [x for x in b_list]:
+    for i,a_note in enumerate(a_list):
+        for j,b_note in enumerate(b_list):
             if (a_note.start, a_note.end) == (b_note.start, b_note.end):
                 # remove the matched pair from their respective lists
                 a_list.remove(a_note)
@@ -40,11 +49,14 @@ def find_changes(a_list, b_list):
 def find_intervals(a_list, b_list):
     # find the intervals at each place where a note changes
     changes = find_changes(a_list, b_list)
-    intervals = []
-    for bar, beat in changes:
-        a = a_list.track[bar].get_notes_playing_at(beat)[0]
-        b = b_list.track[bar].get_notes_playing_at(beat)[0]
-        intervals.append(mintervals.determine(a, b, True))
+    intervals = [
+        get_interval(
+            a_list.get_note_playing_at(bar, beat),
+            b_list.get_note_playing_at(bar, beat)
+        )
+        for bar, beat in changes
+    ]
+
     return zip(intervals, changes)
 
 def combined_directions(a_list, b_list):
@@ -144,6 +156,7 @@ def find_parallel_motion(a_list, b_list):
     prev = ('0', None)
     x = None
     for i,cur in enumerate(pairs):
+        # cur of form ((interval, octaves), (bar, beat))
         if cur[0] != prev[0]:
             if i>0 and len(x) > 1:
                 consecutives.append(x)
@@ -207,15 +220,15 @@ def find_voice_crossing(a_list, b_list):
 def find_illegal_intervals(a_list, b_list):
     allowed_intervals = ['1', 'b3', '3', '4', '5', 'b6', '6']
     pairs = find_intervals(a_list, b_list)
-    return [(i, t) for i, t in pairs if i not in allowed_intervals]
+    return [(i, t) for i, t in pairs if i[0] not in allowed_intervals]
 
 def find_horizontal_intervals(a_list):
-    return [mintervals.determine(a, a.next, True) for a in a_list if a.next is not None]
+    return [get_interval(a, a.next) for a in a_list if a.next is not None]
 
 def find_illegal_leaps(a_list):
     allowed_movements = ['1', 'b2', '2', 'b3', '3', '4', '5', 'b6', '6']
     intervals = find_horizontal_intervals(a_list)
-    return [(i, a_list[x+1]) for x,i in enumerate(intervals) if i not in allowed_movements]
+    return [(i, a_list[x+1]) for x,i in enumerate(intervals) if i[0] not in allowed_movements]
 
 def find_indirect_horizontal_intervals(a_list):
     maxima = find_local_maxima(a_list)
