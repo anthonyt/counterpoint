@@ -346,7 +346,7 @@ def ends_with_lt_tonic(a_list):
 def find_accidentals(a_list):
     key = a_list.track.bars[0].key
     notes_in_key = get_notes(key.name)
-    return [note for note in a_list if note not in notes_in_key]
+    return [note for note in a_list if note.name not in notes_in_key]
 
 
 def first_species(composition):
