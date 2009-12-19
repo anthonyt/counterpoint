@@ -107,7 +107,7 @@ class NoteList(object):
     def __len__(self):
         return len(self.notes)
 
-def createNoteLists(composition):
+def create_note_lists(composition):
     lists = {}
     for track in composition:
         lists[track.name] = NoteList(track)

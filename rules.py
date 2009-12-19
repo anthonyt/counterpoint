@@ -63,7 +63,7 @@ def combined_directions(a_list, b_list):
     changes = find_changes(a_list, b_list)
     a_dirs = find_directions(a_list, changes)
     b_dirs = find_directions(b_list, changes)
-    return zip(a_dirs, b_dirs), changes
+    return zip(a_dirs, b_dirs, changes)
 
 def find_directions(a_list, changes):
     # find the direction (up, down, straight) that a line moves in
@@ -306,4 +306,43 @@ def find_missed_leap_turnarounds(a_list):
     # return a list of the beats (notes) that have the leaped-to note
     # the note following these ones need to move in opposite direction by step
     return [changes[i+1] for i in invalid_leaps]
+
+def find_direct_motion(a_list, b_list):
+    invalid_direct_intervals = ['5', '1']
+
+    intervals = find_intervals(a_list, b_list)
+    directions = combined_directions(a_list, b_list)
+
+    invalid_directs = []
+    for i in range(0, len(intervals)):
+        (interval, octaves), time = intervals[i]
+        a_dir, b_dir, time = directions[i]
+
+        if interval in invalid_direct_intervals and a_dir != 0 and a_dir == b_dir:
+            invalid_directs.append(intervals[i])
+
+    return invalid_directs
+
+def starts_with_tonic(a_list):
+    key = a_list.track.bar[0].key
+    note = a_list.notes[0].name
+    return note == key
+
+def starts_with_tonic_or_fifth(a_list):
+    key = a_list.track.bar[0].key
+    note = a_list.notes[0].name
+    possible_notes = [key, mintervals.perfect_fifth(key)]
+    return note in possible_notes
+
+def ends_with_lt_tonic(a_list):
+    key = a_list.track.bar[-1].key
+    a, b = a_list.notes[-2:]
+    lt, tonic = mintervals.major_seventh(key), key
+    return (a, b) == (lt, tonic)
+
+def find_accidentals(a_list):
+    key = a_list.track.bar[0].key
+    notes_in_key = mintervals.get_notes(key)
+    return [note for note in a_list if note not in notes_in_key]
+
 

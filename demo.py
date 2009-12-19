@@ -5,7 +5,7 @@ from mingus.midi.MidiFileIn import MIDI_to_Composition
 from mingus.midi.MidiFileOut import write_Composition
 from mingus.containers import Note, NoteContainer, Bar, Composition, Instrument, Track
 from mingus.extra.LilyPond import from_Composition, to_png, to_pdf
-from structures import Soprano, Alto, Tenor, Bass, NoteNode, NoteList, createNoteLists
+from structures import Soprano, Alto, Tenor, Bass, NoteNode, NoteList, create_note_lists
 from rules import *
 
 ###
@@ -122,7 +122,7 @@ string = from_Composition(myComp)
 to_png(string, 'demo.png')
 
 
-note_lists = createNoteLists(myComp)
+note_lists = create_note_lists(myComp)
 
 errors, unmatched_sop, unmatched_alto = \
         all_notes_line_up(note_lists['Soprano'], note_lists['Alto'])
@@ -152,6 +152,7 @@ print 'inv indirect A ', find_invalid_indirect_horizontal_intervals(note_lists['
 print 'inv indirect S ', find_invalid_indirect_horizontal_intervals(note_lists['Soprano'])
 print 'missed turns A ', find_missed_leap_turnarounds(note_lists['Alto'])
 print 'missed turns S ', find_missed_leap_turnarounds(note_lists['Soprano'])
+print 'direct 5s, 8s  ', find_direct_motion(note_lists['Alto'], note_lists['Soprano'])
 
 
 """
