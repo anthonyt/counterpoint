@@ -154,6 +154,8 @@ print 'missed turns A ', find_missed_leap_turnarounds(note_lists['Alto'])
 print 'missed turns S ', find_missed_leap_turnarounds(note_lists['Soprano'])
 print 'direct 5s, 8s  ', find_direct_motion(note_lists['Alto'], note_lists['Soprano'])
 
+print first_species(myComp)
+
 
 """
 Methods we need on each note:
