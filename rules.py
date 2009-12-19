@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from mingus.core import intervals as mintervals
+from mingus.core.diatonic import get_notes
+
 
 def get_interval(note_a, note_b):
     name = mintervals.determine(note_a, note_b, True)
@@ -324,25 +326,24 @@ def find_direct_motion(a_list, b_list):
     return invalid_directs
 
 def starts_with_tonic(a_list):
-    key = a_list.track.bar[0].key
+    key = a_list.track.bars[0].key.name
     note = a_list.notes[0].name
     return note == key
 
 def starts_with_tonic_or_fifth(a_list):
-    key = a_list.track.bar[0].key
+    key = a_list.track.bars[0].key
     note = a_list.notes[0].name
-    possible_notes = [key, mintervals.perfect_fifth(key)]
+    possible_notes = [key.name, mintervals.perfect_fifth(key.name)]
     return note in possible_notes
 
 def ends_with_lt_tonic(a_list):
-    key = a_list.track.bar[-1].key
+    key = a_list.track.bars[-1].key
     a, b = a_list.notes[-2:]
-    lt, tonic = mintervals.major_seventh(key), key
+    lt, tonic = mintervals.major_seventh(key.name), key
     return (a, b) == (lt, tonic)
 
 def find_accidentals(a_list):
-    key = a_list.track.bar[0].key
-    notes_in_key = mintervals.get_notes(key)
+    key = a_list.track.bars[0].key
+    notes_in_key = get_notes(key.name)
     return [note for note in a_list if note not in notes_in_key]
-
 
