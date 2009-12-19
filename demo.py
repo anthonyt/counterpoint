@@ -122,6 +122,7 @@ string = from_Composition(myComp)
 to_png(string, 'demo.png')
 
 
+"""
 note_lists = create_note_lists(myComp)
 
 errors, unmatched_sop, unmatched_alto = \
@@ -153,8 +154,14 @@ print 'inv indirect S ', find_invalid_indirect_horizontal_intervals(note_lists['
 print 'missed turns A ', find_missed_leap_turnarounds(note_lists['Alto'])
 print 'missed turns S ', find_missed_leap_turnarounds(note_lists['Soprano'])
 print 'direct 5s, 8s  ', find_direct_motion(note_lists['Alto'], note_lists['Soprano'])
+"""
 
-print first_species(myComp)
+errors = first_species(myComp)
+length = max(*[len(s) for s in errors]) + 2
+for key in errors:
+    print key
+    print errors[key]
+    print ""
 
 
 """
