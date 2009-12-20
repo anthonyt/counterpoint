@@ -32,11 +32,18 @@ class NoteNode(Note):
 
     def __init__(self, noteContainer, bar, beat, duration):
         # assume the notecontainer has at least one note in it.
-        note = noteContainer[0]
         self.bar = bar
         self.beat = beat
         self.duration = duration
-        Note.__init__(self, note)
+
+        if noteContainer is None:
+            self.is_rest = True
+            self.name = 'Rest'
+            self.octave = 0
+        else:
+            self.is_rest = False
+            note = noteContainer[0]
+            Note.__init__(self, note)
 
     def __repr__(self):
         name = Note.__repr__(self)
@@ -44,6 +51,20 @@ class NoteNode(Note):
 
     def __eq__(self, other):
         return self is other
+
+    @property
+    def prev_actual_note(self):
+        prev = self.prev
+        while prev is not None and prev.is_rest:
+            prev = prev.prev
+        return prev
+
+    @property
+    def next_actual_note(self):
+        next = self.next
+        while next is not None and next.is_rest:
+            next = next.next
+        return next
 
     @property
     def start(self):
@@ -97,6 +118,13 @@ class NoteList(object):
             if n.bar == bar and n.beat <= beat and n.end[1] > beat:
                 return n
         return None
+
+    def get_first_actual_note(self):
+        # return the first non-rest note.
+        note = self.notes[0]
+        if note.is_rest:
+            note = note.next_actual_note
+        return note
 
     def __repr__(self):
         return "<NoteList %r>" % (self.notes)

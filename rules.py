@@ -7,26 +7,35 @@ from structures import create_note_lists
 
 
 def get_interval(note_a, note_b):
-    name = mintervals.determine(note_a, note_b, True)
-    octave = abs(int(note_a) - int(note_b))/12
+    """
+    Takes two NoteNode objects, returns a tuple of the form
+    (str: interval name, int: octaves between)
+    """
+    if note_a.is_rest or note_b.is_rest:
+        name = ' '
+        octave = 0
+    else:
+        name = mintervals.determine(note_a, note_b, True)
+        octave = abs(int(note_a) - int(note_b))/12
     return (name, octave)
 
 def get_semitones(interval_tuplet):
+    """
+    Takes an interval tuplet of the form returned by get_interval()
+    Returns the semitone equivalent of the interval as an integer
+    """
     return mintervals.semitones_from_shorthand(interval_tuplet[0]) + 12*interval_tuplet[1]
 
 
 def all_notes_line_up(a_list, b_list):
-    """Counterpoint moves with same rhythm as cantus-firmus (note for note)
-
-    We check this by ensuring that no note in either track starts without
-    A corresponding note, with equal duration, in the other track.
-
-    Returns a tuple (num errors, unmatched notes in CF, unmatched notes in CTP)
-
-    Note: this function's worst-case run-time could be made much more efficient
     """
-    a_list = [x for x in a_list] # copy NoteList to list
-    b_list = [x for x in b_list] # copy NoteList to list
+    Takes two lists of NoteNode objects. These may be NoteList objects.
+    Returns 2 lists.
+    The first list contains the NoteNode objects in a_list that are unmatched in b_list.
+    The second list contains the NoteNode objects in b_list that are unmatched in a_list.
+    """
+    a_list = [x for x in a_list if not x.is_rest] # copy NoteList to list
+    b_list = [x for x in b_list if not x.is_rest] # copy NoteList to list
 
     # remove matched notes
     for a_note in [x for x in a_list]:
@@ -36,13 +45,17 @@ def all_notes_line_up(a_list, b_list):
                 a_list.remove(a_note)
                 b_list.remove(b_note)
                 break
-    errors = len(a_list) + len(b_list) # count up the unmatched notes
 
-    return errors, a_list, b_list
+    return a_list, b_list
 
 def find_changes(a_list, b_list):
-    # find all places where a note changes, in order.
-    # return as a list of (bar_no, beat_no) pairs
+    """
+    Takes two lists of NoteNode objects. These may be NoteList objects.
+    Returns a list of tuples, each of the form:
+        (int: bar #, float: beat #)
+    Each of these tuples represents a time where a note starts in either
+    a_list, b_list, or both.
+    """
     changes = []
     for l in [a_list, b_list]:
         for note in l:
@@ -51,6 +64,17 @@ def find_changes(a_list, b_list):
     return changes
 
 def find_intervals(a_list, b_list):
+    """
+    Takes two NoteList objects.
+    Returns a list of tuples, each of the form:
+    (
+        (str: interval name, int: octaves between),
+        (int: bar #, float: beat #)
+    )
+    There is a 1:1 correlation between tuples and note onsets.
+    Each tuple represents the interval created by one note onset.
+    """
+
     # find the intervals at each place where a note changes
     changes = find_changes(a_list, b_list)
     intervals = [
@@ -64,22 +88,41 @@ def find_intervals(a_list, b_list):
     return zip(intervals, changes)
 
 def combined_directions(a_list, b_list):
+    """
+    Takes two NoteList objects.
+    Returns a list of (3)tuples each of the form:
+        (int: a dir, int: b dir, (int: bar #, float: beat #))
+    """
     changes = find_changes(a_list, b_list)
     a_dirs = find_directions(a_list, changes)
     b_dirs = find_directions(b_list, changes)
     return zip(a_dirs, b_dirs, changes)
 
 def find_directions(a_list, changes):
-    # find the direction (up, down, straight) that a line moves in
-    # each time a note changes
+    """
+    Takes a NoteList object and a list of (bar, beat) tuples of the form
+    returned by find_changes() above.
+
+    Returns a list of integers representing the direction the melody moves
+    in the NoteList at each time specified in the 'changes' list.
+
+    Rests are considered to be no movement.
+    The note after a rest is considered to move relative to the note before the rest.
+
+     1 for up
+     0 for no movement
+    -1 for down
+    """
     directions = []
     def get_dir(note):
         if note is None:
             direction = 0
-        elif note.prev is None:
+        if note.is_rest:
+            direction = 0
+        elif note.prev_actual_note is None:
             direction = 0
         else:
-            direction = cmp(int(note), int(note.prev))
+            direction = cmp(int(note), int(note.prev_actual_note))
         return direction
 
     for time in changes:
@@ -89,6 +132,14 @@ def find_directions(a_list, changes):
     return directions
 
 def find_local_minima(a_list):
+    """
+    Takes a NoteList object.
+
+    Returns a list of tuples of the form returned by find_changes().
+    Each of these (int: bar #, float: beat #) tuples will represent the onset
+    of a note that is a local minimum in the melody in a_list.
+    """
+
     changes = find_changes(a_list, [])
     dirs = find_directions(a_list, changes)
     dirs = zip(dirs, changes)
@@ -100,7 +151,13 @@ def find_local_minima(a_list):
         if cur == 0:
             continue
         elif cur == 1:
-            minima.append(changes[0])
+            # This is a bit tricky.
+            # If the melody starts with a rest, just looking at the directions
+            # will imply that the rest is a minimum, so we must find the first
+            # non-rest note in the melody. That will be our minimum.
+            note = a_list.get_first_actual_note()
+            if note is not None:
+                minima.append((note.bar, note.beat))
         break
 
     prev_d = 0
@@ -121,6 +178,13 @@ def find_local_minima(a_list):
     return minima
 
 def find_local_maxima(a_list):
+    """
+    Takes a NoteList object.
+
+    Returns a list of tuples of the form returned by find_changes().
+    Each of these (int: bar #, float: beat #) tuples will represent the onset
+    of a note that is a local maximum in the melody in a_list.
+    """
     changes = find_changes(a_list, [])
     dirs = find_directions(a_list, changes)
     dirs = zip(dirs, changes)
@@ -132,7 +196,13 @@ def find_local_maxima(a_list):
         if cur == 0:
             continue
         elif cur == -1:
-            maxima.append(changes[0])
+            # This is a bit tricky.
+            # If the melody starts with a rest, just looking at the directions
+            # will imply that the rest is a maximum, so we must find the first
+            # non-rest note in the melody. That will be our maximum.
+            note = a_list.get_first_actual_note()
+            if note is not None:
+                maxima.append((note.bar, note.beat))
         break
 
     prev_d = 0
@@ -153,13 +223,14 @@ def find_local_maxima(a_list):
     return maxima
 
 def find_parallel_motion(a_list, b_list):
-    # if the pairs of intervals are not the same
-    #   take them out of the list
-    # if they are the same
-    #   if they're m3, m6, or octaves thereof
-    #     m
-    #   if yes
-    # make sure they're 3rds, 6ths, or octaves thereof.
+    """
+    Takes two NoteList objects.
+
+    Returns a list of lists.
+    Each sub-list list will contain tuples representing intervals that appear at least
+    twice.
+    Each sub-list is of the form returned by find_intervals().
+    """
     pairs = find_intervals(a_list, b_list)
 
     consecutives = []
@@ -177,6 +248,16 @@ def find_parallel_motion(a_list, b_list):
     return consecutives
 
 def find_invalid_parallel_intervals(a_list, b_list):
+    """
+    Takes two NoteList objects.
+
+    Return format is identical to find_parallel_motion() above.
+    Sub-lists here will only contain illegal sets of parallel intervals,
+    however.
+
+    From the rules of first species counterpoint:
+        Only 3rds and 6ths (and their octaves) may be repeated.
+    """
     allowed_parallel_intervals = ['3', '6']
     consecutives = find_parallel_motion(a_list, b_list)
 
@@ -188,22 +269,51 @@ def find_invalid_parallel_intervals(a_list, b_list):
     return invalid
 
 def find_invalid_consecutive_parallels(a_list, b_list):
+    """
+    Takes two NoteList objects.
+
+    Return format is identical to find_parallel_motion() above.
+    Sub-lists here will only contain illegal sets of parallel intervals,
+    however.
+
+    From the rules of first species counterpoint:
+        Any one interval may be repeated a maximum of three times consecutively.
+    """
     max_consecutive_parallel = 3
     consecutives = find_parallel_motion(a_list, b_list)
 
     return [c for c in consecutives if len(c) > max_consecutive_parallel]
 
 def find_coincident_maxima(a_list, b_list):
+    """
+    Takes two NoteList objects.
+
+    Return format is identical to find_local_maxima() above.
+    Tuples returned here will only include note-onsets that are local maxima
+    in both provided NoteList melodies, however.
+    """
     a_maxima = find_local_maxima(a_list)
     b_maxima = find_local_maxima(b_list)
 
     return [x for x in a_maxima if x in b_maxima]
 
-def find_voice_crossing(b_list, a_list):
-    """NB: a_list must be lower voice; b_list must be higher voice"""
-    # 0 -> no crossing into current note's space
-    # 1 -> no crossing into previous note's space
-    note_spacing = 1
+def find_voice_crossing(b_list, a_list, note_spacing=1):
+    """
+    Takes two NoteList objects and an integer.
+
+    note_spacing parameter defines how many previous notes to consider when
+    looking for voice crossings.
+    0 means consider only the immediate note.
+    1 means consider the previous note also.
+    2 etc.
+
+    Returns a list of notes that infringe on each other's space.
+    a_list must represent the lower voice
+    b_list must represent the higher voice
+
+    Returns a list of tuples, each of the form:
+        (NoteNode, NoteNode)
+    """
     crossings = []
 
     def f_v_c(c_list, d_list, comparator):
@@ -219,6 +329,9 @@ def find_voice_crossing(b_list, a_list):
             for i in range(0, len(c_notes)):
                 c = c_notes[i]
                 d = d_notes[i]
+
+                if c.is_rest or d.is_rest:
+                    continue
                 if comparator(int(c), int(d)):
                     if (d, c) not in crossings:
                         crossings.append((c, d))
@@ -228,19 +341,60 @@ def find_voice_crossing(b_list, a_list):
     return crossings
 
 def find_illegal_intervals(a_list, b_list):
+    """
+    Takes two NoteList objects.
+
+    Return format is identical to find_intervals() above.
+
+    Returned tuples here, however, will only represent intervals that are
+    not explicitly allowed by the allowed_intervals list.
+    """
     allowed_intervals = ['1', 'b3', '3', '4', '5', 'b6', '6']
     pairs = find_intervals(a_list, b_list)
     return [(i, t) for i, t in pairs if i[0] not in allowed_intervals]
 
 def find_horizontal_intervals(a_list):
-    return [get_interval(a, a.next) for a in a_list if a.next is not None]
+    """
+    Takes a single NoteList object.
+
+    Returns a list of tuples of the form returned by get_interval() above,
+    representing the intervals between each pair of consecutive notes in the
+    provided NoteList.
+    """
+    return [
+        get_interval(a, a.next_actual_note)
+        for a in a_list
+        if not a.is_rest
+        and a.next_actual_note is not None
+    ]
 
 def find_illegal_leaps(a_list):
+    """
+    Takes a single NoteList object.
+
+    Return format is identical to find_horizontal_intervals() above.
+
+    Returned tuples here will only represent those intervals that are not
+    explicitly allowed by the allowed_movements list below.
+    """
     allowed_movements = ['1', 'b2', '2', 'b3', '3', '4', '5', 'b6', '6']
     intervals = find_horizontal_intervals(a_list)
     return [(i, a_list[x+1]) for x,i in enumerate(intervals) if i[0] not in allowed_movements]
 
 def find_indirect_horizontal_intervals(a_list):
+    """
+    Takes a single NoteList object.
+
+    Returns a list of tuples representing intervals outlined by consecutive
+    local maximum/local minimum pairs.
+
+    Each tuple is of the form:
+    (
+        (int: bar #, float: beat #),
+        (int: bar #, float: beat #),
+        (str: interval name, int: octaves between)
+    )
+    """
     maxima = find_local_maxima(a_list)
     minima = find_local_minima(a_list)
 
@@ -260,7 +414,7 @@ def find_indirect_horizontal_intervals(a_list):
     intervals = []
     for a, b in pairs:
         x, y = a_list.get(*a), a_list.get(*b)
-        if y in [x.next, x.prev]:
+        if y in [x.next_actual_note, x.prev_actual_note]:
             # ignore 'indirect' intervals that are right beside eachother.
             continue
         i = mintervals.determine(x, y, True)
@@ -268,11 +422,29 @@ def find_indirect_horizontal_intervals(a_list):
     return intervals
 
 def find_invalid_indirect_horizontal_intervals(a_list):
+    """
+    Takes a single NoteList object.
+
+    Return format is identical to find_indirect_horizontal_intervals() above.
+
+    Intervals represented here, however, are only those that are not
+    explicitly allowed by the allowed_intervals list below.
+    """
     allowed_intervals = ['1', 'b3', '3', '4', '5', 'b6', '6'] # same as allowed vertical intervals
     intervals = find_indirect_horizontal_intervals(a_list)
     return filter(lambda x: x[0] not in allowed_intervals, intervals)
 
 def find_missed_leap_turnarounds(a_list):
+    """
+    Takes a single NoteList object.
+
+    Return format is identical to find_changes() above.
+
+    The only tuples returned here, however, are those that represent the
+    onset of a note which has been approached by a leap greater than
+    half an octave, and which has not been left by step in the opposite
+    direction.
+    """
     # immediately after a leap of (P5, m6, M6, P8), must move by step (m2, M2)
     # in opposite direction
     largest_leap_without_turnaround = 6 # semitones
@@ -315,6 +487,16 @@ def find_missed_leap_turnarounds(a_list):
     return [changes[i+1] for i in invalid_leaps]
 
 def find_direct_motion(a_list, b_list):
+    """
+    Takes two NoteList objects.
+
+    Return format is identical to find_intervals() above.
+
+    Intervals returned here, however, only represent intervals explicitly
+    defined in the invalid_direct_intervals list below, which have been
+    approached through similar motion (ie. both voices moving in the same
+    direction)
+    """
     invalid_direct_intervals = ['5', '1']
 
     intervals = find_intervals(a_list, b_list)
@@ -331,29 +513,81 @@ def find_direct_motion(a_list, b_list):
     return invalid_directs
 
 def starts_with_tonic(a_list):
+    """
+    Takes a single NoteList object.
+
+    Returns True if the first non-rest note in the melody is the tonic
+    of the key defined by the first bar in the melody.
+
+    Returns False otherwise.
+    """
     key = a_list.track.bars[0].key.name
     note = a_list.notes[0].name
     return note == key
 
 def starts_with_tonic_or_fifth(a_list):
+    """
+    Takes a single NoteList object.
+
+    Returns True if the first non-rest note in the melody is the tonic or the fifth
+    of the key defined by the first bar in the melody.
+
+    Returns False otherwise.
+    """
     key = a_list.track.bars[0].key
     note = a_list.notes[0].name
     possible_notes = [key.name, Note(key).transpose('5', True).name]
     return note in possible_notes
 
 def ends_with_lt_tonic(a_list):
+    """
+    Takes a single NoteList object.
+
+    Returns True if the last two notes in the melody are the leading tone and tonic
+    of the key defined by the first bar in the melody.
+
+    Returns False otherwise.
+    """
     key = a_list.track.bars[-1].key
     a, b = a_list.notes[-2:]
     lt, tonic = Note(key).transpose('7', True).name, key.name
     return (a.name, b.name) == (lt, tonic) and int(b) - int(a) == 1
 
 def find_accidentals(a_list):
+    """
+    Takes a single NoteList object.
+
+    Returns a list of NoteNode objects from the melody that do not exist
+    in the key defined by the first bar in the melody.
+    """
     key = a_list.track.bars[0].key
     notes_in_key = get_notes(key.name)
-    return [note for note in a_list if note.name not in notes_in_key]
+    return [
+        note for note in a_list
+        if note.name not in notes_in_key
+        and not note.is_rest
+    ]
 
 
 def get_and_split_note_lists(composition):
+    """
+    Takes a mingus.containers.Composition object.
+
+    Converts the Composition to a categorized set of NoteLists.
+
+    Assumes that composition will have Soprano, Alto, Tenor, Bass tracks.
+    Also assumes that at least two of these tracks have content.
+    Also assumes that Soprano track is higher than Alto track, etc.
+
+    Returns a tuple:
+    (
+        dict of all voices (key => track name; value => NoteList),
+        NoteList that represents the high voice,
+        NoteList that represents the low voice,
+        List of NoteLists that represent the inner voices,
+        List of all possible combinations of voices, each represented by a tuple (a, b)
+    )
+    """
     lists = create_note_lists(composition)
 
     # create a dict of all tracks with notes in them
@@ -390,10 +624,12 @@ def get_and_split_note_lists(composition):
     return n, high_voice, low_voice, inner_voices, voice_combos
 
 def first_species(composition):
-    # assumes that composition will have Soprano, Alto, Tenor, Bass tracks
-    # also assumes that at least two of these tracks have content
-    # also assumes that Soprano track is higher than Alto track, etc, etc.
+    """
+    Takes a mingus.containers.Composition object.
 
+    Returns a dict of possible errors according to the rules of
+    First Species counterpoint.
+    """
     n, high_voice, low_voice, inner_voices, voice_combos = \
         get_and_split_note_lists(composition)
 
