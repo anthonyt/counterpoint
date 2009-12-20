@@ -425,7 +425,7 @@ def first_species(composition):
         high_point_errors[(x, y)] = find_coincident_maxima(n[x], n[y])
         voice_crossing_errors[(x, y)] = find_voice_crossing(n[x], n[y])
         vertical_interval_errors[(x, y)] = find_illegal_intervals(n[x], n[y])
-        direct_motion_errors[(x, y)] = find_illegal_intervals(n[x], n[y])
+        direct_motion_errors[(x, y)] = find_direct_motion(n[x], n[y])
 
     return dict(
         # find errors in specific voices
