@@ -260,6 +260,9 @@ def find_indirect_horizontal_intervals(a_list):
     intervals = []
     for a, b in pairs:
         x, y = a_list.get(*a), a_list.get(*b)
+        if y in [x.next, x.prev]:
+            # ignore 'indirect' intervals that are right beside eachother.
+            continue
         i = mintervals.determine(x, y, True)
         intervals.append((i, a, b))
     return intervals
