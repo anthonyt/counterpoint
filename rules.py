@@ -183,7 +183,7 @@ def find_invalid_parallel_intervals(a_list, b_list):
     invalid = []
     for c in consecutives:
         int_class = c[0][0][0]
-        if len(c) >= 2 and int_class not in allowed_parallel_intervals:
+        if len(c) > 2 and int_class not in allowed_parallel_intervals:
             invalid.append(c)
     return invalid
 
