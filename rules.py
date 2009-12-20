@@ -685,3 +685,13 @@ def first_species(composition):
         vertical_interval_errors = vertical_interval_errors,
         direct_motion_errors = direct_motion_errors,
     )
+
+def second_species(composition):
+    return {}
+
+def third_species(composition):
+    return {}
+
+def fourth_species(composition):
+    return {}
+
