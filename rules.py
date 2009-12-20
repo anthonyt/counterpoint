@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from mingus.core import intervals as mintervals
+from mingus.containers import Note
 from mingus.core.diatonic import get_notes
 from structures import create_note_lists
 
@@ -334,14 +335,14 @@ def starts_with_tonic(a_list):
 def starts_with_tonic_or_fifth(a_list):
     key = a_list.track.bars[0].key
     note = a_list.notes[0].name
-    possible_notes = [key.name, mintervals.perfect_fifth(key.name)]
+    possible_notes = [key.name, Note(key).transpose('5', True).name]
     return note in possible_notes
 
 def ends_with_lt_tonic(a_list):
     key = a_list.track.bars[-1].key
     a, b = a_list.notes[-2:]
-    lt, tonic = mintervals.major_seventh(key.name), key
-    return (a, b) == (lt, tonic)
+    lt, tonic = Note(key).transpose('7', True).name, key.name
+    return (a.name, b.name) == (lt, tonic) and int(b) - int(a) == 1
 
 def find_accidentals(a_list):
     key = a_list.track.bars[0].key
