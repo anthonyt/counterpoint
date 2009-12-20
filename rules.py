@@ -199,7 +199,7 @@ def find_coincident_maxima(a_list, b_list):
 
     return [x for x in a_maxima if x in b_maxima]
 
-def find_voice_crossing(a_list, b_list):
+def find_voice_crossing(b_list, a_list):
     """NB: a_list must be lower voice; b_list must be higher voice"""
     # 0 -> no crossing into current note's space
     # 1 -> no crossing into previous note's space
@@ -359,18 +359,18 @@ def get_and_split_note_lists(composition):
         if len(lists[voice]):
             n[voice] = lists[voice]
 
+    descending_voices = [x for x in ['Soprano', 'Alto', 'Tenor', 'Bass'] if x in n]
+    ascending_voices = [x for x in['Bass', 'Tenor', 'Alto', 'Soprano'] if x in n]
 
     # find the high voice
-    for voice in ['Soprano', 'Alto', 'Tenor', 'Bass']:
-        if voice in n:
-            high_voice = n[voice]
-            break
+    for voice in descending_voices:
+        high_voice = n[voice]
+        break
 
     # find the low voice
-    for voice in ['Bass', 'Tenor', 'Alto', 'Soprano']:
-        if voice in n:
-            low_voice = n[voice]
-            break
+    for voice in ascending_voices:
+        low_voice = n[voice]
+        break
 
     # find the inner voices
     inner_voices = []
@@ -380,10 +380,9 @@ def get_and_split_note_lists(composition):
 
     # find all possible combinations of voices
     voice_combos = []
-    for x in n:
-        for y in n:
-            if x != y and (x, y) not in voice_combos and (y, x) not in voice_combos:
-                voice_combos.append((x, y))
+    for i,x in enumerate(descending_voices):
+        for y in descending_voices[i+1:]:
+            voice_combos.append((x, y))
 
     return n, high_voice, low_voice, inner_voices, voice_combos
 
