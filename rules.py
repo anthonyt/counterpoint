@@ -349,13 +349,10 @@ def find_accidentals(a_list):
     return [note for note in a_list if note.name not in notes_in_key]
 
 
-def first_species(composition):
-    # assumes that composition will have Soprano, Alto, Tenor, Bass tracks
-    # also assumes that at least two of these tracks have content
-    # also assumes that Soprano track is higher than Alto track, etc, etc.
+def get_and_split_note_lists(composition):
+    lists = create_note_lists(composition)
 
     # create a dict of all tracks with notes in them
-    lists = create_note_lists(composition)
     n = {}
     for voice in lists:
         if len(lists[voice]):
@@ -386,6 +383,16 @@ def first_species(composition):
         for y in n:
             if x != y and (x, y) not in voice_combos and (y, x) not in voice_combos:
                 voice_combos.append((x, y))
+
+    return n, high_voice, low_voice, inner_voices, voice_combos
+
+def first_species(composition):
+    # assumes that composition will have Soprano, Alto, Tenor, Bass tracks
+    # also assumes that at least two of these tracks have content
+    # also assumes that Soprano track is higher than Alto track, etc, etc.
+
+    n, high_voice, low_voice, inner_voices, voice_combos = \
+        get_and_split_note_lists(composition)
 
     # find errors in specific voices
     high_voice_beginning_error = starts_with_tonic_or_fifth(high_voice)
