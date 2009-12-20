@@ -14,7 +14,7 @@ def get_semitones(interval_tuplet):
     return mintervals.semitones_from_shorthand(interval_tuplet[0]) + 12*interval_tuplet[1]
 
 
-def all_notes_line_up(cf_list, ctp_list):
+def all_notes_line_up(a_list, b_list):
     """Counterpoint moves with same rhythm as cantus-firmus (note for note)
 
     We check this by ensuring that no note in either track starts without
@@ -24,12 +24,12 @@ def all_notes_line_up(cf_list, ctp_list):
 
     Note: this function's worst-case run-time could be made much more efficient
     """
-    a_list = [x for x in cf_list]  # cast NoteList to list
-    b_list = [x for x in ctp_list] # cast NoteList to list
+    a_list = [x for x in a_list] # copy NoteList to list
+    b_list = [x for x in b_list] # copy NoteList to list
 
     # remove matched notes
-    for i,a_note in enumerate(a_list):
-        for j,b_note in enumerate(b_list):
+    for a_note in [x for x in a_list]:
+        for b_note in [y for y in b_list]:
             if (a_note.start, a_note.end) == (b_note.start, b_note.end):
                 # remove the matched pair from their respective lists
                 a_list.remove(a_note)
