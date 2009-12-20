@@ -15,19 +15,6 @@ from rules import *
 ###
 
 # First Species Canti Firmi:
-cf_1 = [
-    ('C-4', 1),
-    ('D-4', 1),
-    ('F-4', 1),
-    ('E-4', 1),
-    ('A-4', 1),
-    ('G-4', 1),
-    ('F-4', 1),
-    ('E-4', 1),
-    ('D-4', 1),
-    ('C-4', 1)
-]
-
 harm_1 = [
     ('C-5', 1),
     ('B-4', 1),
@@ -36,9 +23,35 @@ harm_1 = [
     ('C-5', 1),
     ('D-5', 1),
     ('D-5', 1),
-    ('A-4', 1),
+    ('E-5', 1),
     ('B-4', 1),
     ('C-5', 1)
+]
+
+harm_2 = [
+    ('E-4', 1),
+    ('G-4', 1),
+    ('F-4', 1),
+    ('G-4', 1),
+    ('E-4', 1),
+    ('B-4', 1),
+    ('A-4', 1),
+    ('A-4', 1),
+    ('G-4', 1),
+    ('E-4', 1)
+]
+
+cf_1 = [
+    ('C-3', 1),
+    ('D-3', 1),
+    ('F-3', 1),
+    ('E-3', 1),
+    ('A-3', 1),
+    ('G-3', 1),
+    ('F-3', 1),
+    ('E-3', 1),
+    ('D-3', 1),
+    ('C-3', 1)
 ]
 
 cf_2 = [
@@ -82,35 +95,34 @@ cf_4 = [
 ]
 
 # Set up our vocal 'tracks'
-sopranoTrack = Track(instrument=Soprano())
-altoTrack = Track(instrument=Alto())
-tenorTrack = Track(instrument=Tenor())
-bassTrack = Track(instrument=Bass())
+soprano_track = Track(instrument=Soprano())
+alto_track = Track(instrument=Alto())
+tenor_track = Track(instrument=Tenor())
+bass_track = Track(instrument=Bass())
 
 # Add the notes/durations to the appropriate vocal tracks
 key = 'C'
 meter = (4, 4)
 
-# name our vocal tracks something useful
-# cf = cantus firmus
-# ctp = counterpoint
-cf_track = altoTrack
-ctp_track = sopranoTrack
-
-cf_track.add_bar(Bar(key=key, meter=meter))
-ctp_track.add_bar(Bar(key=key, meter=meter))
+soprano_track.add_bar(Bar(key=key, meter=meter))
+alto_track.add_bar(Bar(key=key, meter=meter))
+bass_track.add_bar(Bar(key=key, meter=meter))
 
 for x in cf_1:
-    cf_track.add_notes(*x)
+    bass_track.add_notes(*x)
 
 for x in harm_1:
-    ctp_track.add_notes(*x)
+    soprano_track.add_notes(*x)
+
+for x in harm_2:
+    alto_track.add_notes(*x)
+
 
 # Create a composition, and add the vocal tracks to it.
 myComp = Composition()
 myComp.set_title('Counterpoint Exercise', 'subtitle')
 myComp.set_author('Anthony Theocharis', 'anthony.theocharis@gmail.com')
-for track in [ctp_track, cf_track]:
+for track in [soprano_track, alto_track, bass_track]:
     track.name = track.instrument.name
     myComp.add_track(track)
 
