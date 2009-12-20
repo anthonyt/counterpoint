@@ -396,9 +396,9 @@ def first_species(composition):
         get_and_split_note_lists(composition)
 
     # find errors in specific voices
-    high_voice_beginning_error = starts_with_tonic_or_fifth(high_voice)
-    high_voice_ending_error = ends_with_lt_tonic(high_voice)
-    low_voice_beginning_error = starts_with_tonic(low_voice)
+    high_voice_beginning_error = not starts_with_tonic_or_fifth(high_voice)
+    high_voice_ending_error = not ends_with_lt_tonic(high_voice)
+    low_voice_beginning_error = not starts_with_tonic(low_voice)
 
     # find errors in each melody
     horizontal_errors = {}
