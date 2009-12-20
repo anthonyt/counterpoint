@@ -167,7 +167,7 @@ def find_parallel_motion(a_list, b_list):
     x = None
     for i,cur in enumerate(pairs):
         # cur of form ((interval, octaves), (bar, beat))
-        if cur[0] != prev[0]:
+        if cur[0] != prev[0] or (i == len(pairs) - 1):
             if i>0 and len(x) > 1:
                 consecutives.append(x)
             x = []
@@ -421,7 +421,7 @@ def first_species(composition):
     for x, y in voice_combos:
         alignment_errors[(x, y)] = all_notes_line_up(n[x], n[y])
         parallel_errors[(x, y)] = find_invalid_parallel_intervals(n[x], n[y])
-        parallel_errors[(x, y)] = find_invalid_consecutive_parallels(n[x], n[y])
+        consecutive_parallel_errors[(x, y)] = find_invalid_consecutive_parallels(n[x], n[y])
         high_point_errors[(x, y)] = find_coincident_maxima(n[x], n[y])
         voice_crossing_errors[(x, y)] = find_voice_crossing(n[x], n[y])
         vertical_interval_errors[(x, y)] = find_illegal_intervals(n[x], n[y])
