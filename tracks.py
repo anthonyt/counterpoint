@@ -121,3 +121,7 @@ second_species_harm_1_sop = [
     ('A-4', 2), ('B-4', 2),
     ('C-5', 1)
 ]
+
+# melodies = { 'Soprano': second_species_harm_1_sop, 'Alto': second_species_cf_1_alto, 'Tenor': [], 'Bass': [] }
+# species = 2
+
