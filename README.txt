@@ -56,7 +56,8 @@ Options:
 
   -p PNG_FILE
   --write-png=PNG_FILE
-                        Write printed music to PNG_FILE
+                        Write printed music to PNG_FILE.
+                        Only works if gnu lilypond is in your PATH.
 
   -z MIDI_FILE          Testing option. Read in a midi file, but do not test
                         it for errors. Can be used with -w, -p and -l
@@ -80,16 +81,16 @@ Example 2:
 	named 'harmonization.mid' in the current directory.
 
 Example 3:
-	./counterpoint.py -t -p harmonization.png
+	./counterpoint.py -t -p first_species.png
 
 	This will read the data from tracks.py, the same as above, but the
 	-w flag tells the program to write out a PNG image of the generated score
-	named 'harmonization.png' in the current directory.
+	named 'first_species.png' in the current directory.
 
 Example 4:
-	./counterpoint.py -r harmony.mid -s 2
+	./counterpoint.py -r second_species.mid -s 2
 
-	This will read note and track data from a midi file named 'harmony.mid'
+	This will read note and track data from a midi file named 'second_species.mid'
 	The tracks in this midi file must be named Soprano, Alto, Tenor, or Bass.
 	There must be no more than one of each track name, and there must be
 	between 2 and 4 tracks total.
