@@ -222,9 +222,11 @@ def find_local_maxima(a_list):
 
     return maxima
 
-def find_parallel_motion(a_list, b_list):
+def find_parallel_motion(a_list, b_list, filter_fn=None):
     """
-    Takes two NoteList objects.
+    Takes two NoteList objects and an optional filter function.
+
+    The filter function, if provided, is used on the result of find_intervals().
 
     Returns a list of lists.
     Each sub-list list will contain tuples representing intervals that appear at least
@@ -232,6 +234,10 @@ def find_parallel_motion(a_list, b_list):
     Each sub-list is of the form returned by find_intervals().
     """
     pairs = find_intervals(a_list, b_list)
+
+
+    if callable(filter_fn):
+        pairs = filter(filter_fn, pairs)
 
     consecutives = []
     prev = ('0', None)
@@ -297,15 +303,15 @@ def find_coincident_maxima(a_list, b_list):
 
     return [x for x in a_maxima if x in b_maxima]
 
-def find_voice_crossing(b_list, a_list, note_spacing=1):
+def find_voice_crossing(b_list, a_list, note_spacing=2, note_filter_fn=None):
     """
     Takes two NoteList objects and an integer.
 
     note_spacing parameter defines how many previous notes to consider when
     looking for voice crossings.
-    0 means consider only the immediate note.
-    1 means consider the previous note also.
-    2 etc.
+    1 means consider only the immediate note.
+    2 means consider the previous note also.
+    3 etc.
 
     Returns a list of notes that infringe on each other's space.
     a_list must represent the lower voice
@@ -318,7 +324,9 @@ def find_voice_crossing(b_list, a_list, note_spacing=1):
 
     def f_v_c(c_list, d_list, comparator):
         c_notes = [c for c in c_list]
-        d_notes = [d_list.get_note_playing_at(c.bar, c.beat) for c in c_list]
+        if callable(note_filter_fn):
+            c_notes = filter(note_filter_fn, c_notes)
+        d_notes = [d_list.get_note_playing_at(c.bar, c.beat) for c in c_notes]
 
         for x in range(0, note_spacing):
             if x > 0:
@@ -330,7 +338,7 @@ def find_voice_crossing(b_list, a_list, note_spacing=1):
                 c = c_notes[i]
                 d = d_notes[i]
 
-                if c.is_rest or d.is_rest:
+                if c is None or d is None or c.is_rest or d.is_rest:
                     continue
                 if comparator(int(c), int(d)):
                     if (d, c) not in crossings:
@@ -430,8 +438,28 @@ def find_invalid_indirect_horizontal_intervals(a_list):
     Intervals represented here, however, are only those that are not
     explicitly allowed by the allowed_intervals list below.
     """
-    allowed_intervals = ['1', 'b3', '3', '4', '5', 'b6', '6'] # same as allowed vertical intervals
+    allowed_intervals = ['1', 'b2', '2', 'b3', '3', '4', '5', 'b6', '6']
     intervals = find_indirect_horizontal_intervals(a_list)
+    return filter(lambda x: x[0] not in allowed_intervals, intervals)
+
+def find_strong_beat_horizontal_intervals(a_list):
+    strong_beat_notes = sbn = [x for x in a_list if x.start[1] == 0]
+
+    strong_beat_pairs = [
+        (sbn[i], sbn[i+1])
+        for i,x in enumerate(sbn)
+        if (i+1) < len(sbn)
+        and sbn[i] is not None and not sbn[i].is_rest
+        and sbn[i+1] is not None and not sbn[i+1].is_rest
+    ]
+
+    intervals = [(mintervals.determine(a, b, True), a, b) for a, b in strong_beat_pairs]
+
+    return intervals
+
+def find_invalid_strong_beat_horizontal_intervals(a_list):
+    allowed_intervals = ['1', 'b2', '2', 'b3', '3', '4', '5', 'b6', '6']
+    intervals = find_strong_beat_horizontal_intervals(a_list)
     return filter(lambda x: x[0] not in allowed_intervals, intervals)
 
 def find_missed_leap_turnarounds(a_list):
@@ -569,6 +597,64 @@ def find_accidentals(a_list):
         and not note.is_rest
     ]
 
+def find_legal_dissonances(a_list, b_list):
+    """
+    Takes two NoteList objects.
+
+    Return format is identical to find_intervals() above.
+
+    Returned tuples here, however, will only represent intervals that are
+    illegal in first species counterpoint, but legal in second species.
+
+    Second Species Exception:
+    Dissonant intervals that fall on weak beats, that are approached and left by step
+    are okay.
+    """
+    def interval_is_step(x):
+        return get_semitones(x) <= 2
+
+    def approached_and_left_by_step(interval):
+        i, t = interval
+        a_note = a_list.get(*t)
+        b_note = b_list.get(*t)
+
+        if a_note is not None and b_note is not None:
+            # both voices moved at the same time to get into the dissonance.
+            # that means neither is cf, so both must leave by step
+            a_approach = get_interval(a_note, a_note.prev)
+            b_approach = get_interval(b_note, b_note.prev)
+            a_depart = get_interval(a_note, a_note.next)
+            b_depart = get_interval(b_note, b_note.next)
+
+            movements = [a_approach, b_approach, a_depart, b_depart]
+        else:
+            # one of the notes was already playing, (probably the c.f.)
+            # that note can do whatever it wants.
+            # just make sure c_note was approached and left by step
+            if a_note is not None:
+                c_note = a_note
+            elif b_note is not None:
+                c_note = b_note
+            c_approach = get_interval(c_note, c_note.prev)
+            c_depart = get_interval(c_note, c_note.next)
+
+            movements = [c_approach, c_depart]
+
+        return all(map(
+            interval_is_step,
+            movements
+        ))
+
+    allowed_intervals = ['1', 'b3', '3', '4', '5', 'b6', '6']
+    pairs = find_intervals(a_list, b_list)
+    weak_intervals = [(i, t) for i, t in pairs if t[1] == 0.5]
+    weak_dissonances = [(i, t) for i, t in weak_intervals if i[0] not in allowed_intervals]
+    safe_dissonances = [
+        x for x in weak_dissonances
+        if approached_and_left_by_step(x)
+    ]
+    return safe_dissonances
+
 
 def get_and_split_note_lists(composition):
     """
@@ -688,7 +774,146 @@ def first_species(composition):
     )
 
 def second_species(composition):
-    return {}
+    """
+    Takes a mingus.containers.Composition object.
+
+    Returns a dict of possible errors according to the rules of
+    First Species counterpoint.
+    """
+    n, high_voice, low_voice, inner_voices, voice_combos = \
+        get_and_split_note_lists(composition)
+
+    # find the cantus firmus. In 2nd species, this is the voice that is
+    # all whole notes.
+    cantus_firmus = None
+    for voice in n:
+        if all([note.duration == 1 for note in n[voice]]):
+            cantus_firmus = voice
+            break
+
+    # if we can't find the C.F. return right away.
+    if cantus_firmus == None:
+        return dict(
+            cantus_firmus = None
+        )
+
+    other_voices = [voice for voice in n if voice != cantus_firmus]
+
+    for voice in other_voices:
+        # all other voices must be half notes (and not rests either!).
+        # except:
+        #   last note must be whole note
+        #   penultimate note may be whole note
+        #   first note may be half rest.
+        invalid_rests = [note for note in n[voice][1:] if note.is_rest]
+        invalid_durations = [note for note in n[voice][:-2] if note.duration != 0.5]
+        if n[voice][-1].duration != 1:
+            invalid_durations.append(n[voice][-1])
+        if n[voice][-2].duration not in [1, 0.5]:
+            invalid_durations.append(n[voice][-2])
+
+    # find errors in specific voices
+    high_voice_beginning_error = not starts_with_tonic_or_fifth(high_voice)
+    high_voice_ending_error = not ends_with_lt_tonic(high_voice)
+    low_voice_beginning_error = not starts_with_tonic(low_voice)
+
+    # find errors in each melody
+    horizontal_errors = {}
+    weak_horizontal_errors  = {}
+    turnaround_errors = {}
+    accidental_errors = {}
+    repeated_notes = {}
+    strong_beat_horizontals = {}
+    for x in n:
+        horizontal_errors[x] = find_illegal_leaps(n[x])
+        turnaround_errors[x] = find_missed_leap_turnarounds(n[x])
+        accidental_errors[x] = find_accidentals(n[x])
+
+        # no voice is allowed to repeat notes
+        repeated = []
+        note = n[x].get_first_actual_note()
+        while note is not None:
+            next = note.next_actual_note
+            if next is not None and get_interval(note, next) == ('1', 0):
+                repeated.append(note, next)
+            note = next
+        repeated_notes[x] = repeated
+
+        # leaps greater than a 5th may only go from strong to weak beats
+        intervals = find_horizontal_intervals(n[x])
+        weak_horizontal_errors[x] = [
+            (interval, n[x][i+1])
+            for i,interval in enumerate(intervals)
+            if get_semitones(interval) > 7 # leap is greater than 5th
+            and n[x][i+1].beat == 0 # note falls on a strong beat
+        ]
+
+        # find invalid intervals between consecutive downbeats.
+        strong_beat_horizontals[x] = \
+            find_invalid_strong_beat_horizontal_intervals(n[x])
+
+    # find errors between pairs of voices.
+    parallel_errors = {}
+    parallel_downbeat_errors = {}
+    consecutive_parallel_errors = {}
+    high_point_errors = {}
+    voice_crossing_errors = {}
+    vertical_interval_errors = {}
+    direct_motion_errors = {}
+    for x, y in voice_combos:
+        parallel_errors[(x, y)] = find_invalid_parallel_intervals(n[x], n[y])
+        # We also have to consider consecutive downbeats, now, when looking for
+        # parallel intervals.
+        downbeat_filter = lambda x: x[1][1] == 0
+        parallel_downbeat_errors[(x, y)] = \
+            find_parallel_motion(n[x], n[y], filter_fn=downbeat_filter)
+        consecutive_parallel_errors[(x, y)] = find_invalid_consecutive_parallels(n[x], n[y])
+        high_point_errors[(x, y)] = find_coincident_maxima(n[x], n[y])
+
+        # second species has different rules for vertical intervals
+        dissonances = find_illegal_intervals(n[x], n[y])
+        legal_dissonances = find_legal_dissonances(n[x], n[y])
+        vertical_interval_errors[(x, y)] = [
+            d for d in dissonances
+            if d not in legal_dissonances
+        ]
+
+        direct_motion_errors[(x, y)] = find_direct_motion(n[x], n[y])
+
+        # voice crossing in the form of unison on weak beat is okay now.
+        voice_crossings = find_voice_crossing(n[x], n[y])
+        weak_beat_filter = lambda x: x.beat == 0.5
+        legal_crossings = [
+            v
+            for v in find_voice_crossing(
+                n[x], n[y],
+                note_spacing=1,
+                note_filter_fn=weak_beat_filter
+            ) # find all weak beat voice crossings
+            if get_interval(v[0], v[1]) == ('1', 0) # filter to perfect unisons
+        ]
+        voice_crossing_errors[(x, y)] = [v for v in voice_crossings if v not in legal_crossings]
+
+    return dict(
+        cantus_firmus = cantus_firmus,
+        # find errors in specific voices
+        high_voice_beginning_error = high_voice_beginning_error,
+        high_voice_ending_error = high_voice_ending_error,
+        low_voice_beginning_error = low_voice_beginning_error,
+        # intra-voice errors
+        horizontal_errors = horizontal_errors,
+        turnaround_errors = turnaround_errors,
+        weak_horizontal_errors = weak_horizontal_errors,
+        accidental_errors = accidental_errors,
+        strong_beat_horizontals = strong_beat_horizontals,
+        # inter-voice errors
+        parallel_errors = parallel_errors,
+        consecutive_parallel_errors = consecutive_parallel_errors,
+        high_point_errors = high_point_errors,
+        voice_crossing_errors = voice_crossing_errors,
+        vertical_interval_errors = vertical_interval_errors,
+        direct_motion_errors = direct_motion_errors,
+    )
 
 def third_species(composition):
     return {}
