@@ -95,11 +95,22 @@ class NoteList(object):
 
         bars = track.bars
         for i in range(0, len(bars)):
+            last_beat = 0.0
             bar = bars[i]
             for n in bar:
                 beat, duration, noteContainer = n
+
+                if beat > last_beat:
+                    # There's a gap between this note and the previous one.
+                    # Insert a rest.
+                    rest_duration = int(1./(beat - last_beat))
+                    rest = NoteNode(None, i, last_beat, rest_duration)
+                    self.append(rest)
+
                 note = NoteNode(noteContainer, i, beat, duration)
                 self.append(note)
+                last_beat = note.end[1]
+
 
     def append(self, note):
         if len(self.notes):
