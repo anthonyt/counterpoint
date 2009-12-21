@@ -36,7 +36,7 @@ class NoteNode(Note):
         self.beat = beat
         self.duration = duration
 
-        if noteContainer is None:
+        if noteContainer is None or len(noteContainer) == 0:
             self.is_rest = True
             self.name = 'Rest'
             self.octave = 0
