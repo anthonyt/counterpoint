@@ -27,10 +27,10 @@ First Species:
 			intervallic relationship that fits in permissible vertical intervals
 			'indirect horizontal dissonance'
 
-		don't immediately repeat a note
-			EXCEPT: you can actually do this once. it's supposed to be tied.
+- 		don't immediately repeat a note
+- 			EXCEPT: you can actually do this once. it's supposed to be tied.
 
-		don't immediately repeat a melodic segment (or a transposition thereof)
+- 		don't immediately repeat a melodic segment (or a transposition thereof)
 
 		immediately after a leap of (P5, m6, M6, P8), must move by step (m2, M2)
 			in opposite direction
@@ -46,13 +46,13 @@ First Species:
 
 		upper voice must end with the "degree 7, degree 8" pattern.
 
-		if in a minor key, upper voice must end with "#7, 8"
+-		if in a minor key, upper voice must end with "#7, 8"
 
 		may not use notes that are outside of the key
-			EXCEPT: degree 7 at end of upper voice in minor key
-			        degree 6 in minor key if not doing so would result in horizontal interval of aug2
+-			EXCEPT: degree 7 at end of upper voice in minor key
+-			        degree 6 in minor key if not doing so would result in horizontal interval of aug2
 
-		may not play #6 along side natural 6 or #7 against natural 7
+-		may not play #6 along side natural 6 or #7 against natural 7
 
 		
 
@@ -66,4 +66,70 @@ First Species:
 		build up to a high point, then come back down
 		avoid hovering within a small span (like a 3rd or 4th)
 		use more (m3, M3, m6, M6) than (P5, P8)
+
+
+
+
+Second Species:
+	one voice must be whole notes (this is the cantus firmus)
+
+	other voices should be all half-notes:
+		except last note (must be whole note)
+		second last note (may be a whole note)
+		except first note (may be a half-rest)
+
+	no repeated notes allowed.
+
+	parallel 5ths/8ves on adjacent down beats are also not allowed
+
+	leaps greater than a 5th may only go from strong-to-weak beats.
+		(ie, must be within the same bar)
+
+	unison on weak beat is okay
+
+	dissonant intervals may now occur
+		only on weak beat
+		only approached by step
+		only left by step
+
+	indirect horizontal dissonance now not a problem between maxima and minima
+
+	indirect horizontal dissonance now a problem between adjacent downbeats
+
+
+
+Fourth Species:
+	one voice must be whole notes (this is the cantus firmus)
+
+	other voices should be all half-notes:
+		except the last note (must be a whole note)
+		except the first note (must be half-note rest)
+
+	all half-notes starting on strong beats must be ties (repetitions)
+		of the previous note
+		(except twice. you can un-tie two strong-beat half notes... just not directly after eachother)
+
+	dissonances are okay on downbeats
+		if the downbeat is tied from a consonant interval before it
+		and the dissonance is resolved downward by step on the next note
+		and the next interval is consonant
+			(ie. can't have two dissonances in a row)
+
+	4th-5th suspensions and 7th-8ve suspensions are not kosher in lower voice.
+
+	we now look at repeated suspensions as well as just repeated intervals
+		(strong, weak) pairs of (7, 6) (4, 3) and (2, 3) can be used in a consecutively
+			just not more than 3 of one type in a row!
+		(strong, weak) pairs of (2-1) suspensions can't be used consecutively
+			they sound like parallel octaves/unisons
+
+	parallel octaves on consecutive strong-beats are not okay
+		unless the interval between them is consonant
+
+	parallel octaves on consecutive weak-beats are not okay
+		unless the interval between them is consonant
+
+	high voice (if not cantus firmus) must end with intervals (7, 6, 1)
+	low voice (if not cantus firmus) must end with intervals (2, 3, 1)
+	cantus firmus must end with scale degrees (2, 1) ?
 
