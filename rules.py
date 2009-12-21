@@ -548,8 +548,9 @@ def ends_with_lt_tonic(a_list):
 
     Returns False otherwise.
     """
-    key = a_list.track.bars[-1].key
+    key = a_list.track.bars[0].key
     a, b = a_list.notes[-2:]
+
     lt, tonic = Note(key).transpose('7', True).name, key.name
     return (a.name, b.name) == (lt, tonic) and int(b) - int(a) == 1
 
