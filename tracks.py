@@ -1,3 +1,18 @@
+# -*- coding: utf-8 -*-
+# tracks.py
+
+"""
+NOTE:
+
+In this file, notes are defined as tuples of
+    ("note name-octave number", duration)
+
+Durations defined as 1/beats.
+   ie. a quarternote has duration 4, and a wholenote has duration 1
+
+So ('C-4', 2') is a half-note at middle C
+"""
+
 # Active tracks defined in the following dict
 melodies = {
     'Soprano': [
