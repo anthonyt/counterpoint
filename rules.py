@@ -270,7 +270,7 @@ def find_invalid_parallel_intervals(a_list, b_list):
     invalid = []
     for c in consecutives:
         int_class = c[0][0][0]
-        if len(c) > 2 and int_class not in allowed_parallel_intervals:
+        if int_class not in allowed_parallel_intervals:
             invalid.append(c)
     return invalid
 
@@ -426,7 +426,7 @@ def find_indirect_horizontal_intervals(a_list):
             # ignore 'indirect' intervals that are right beside eachother.
             continue
         i = mintervals.determine(x, y, True)
-        intervals.append((i, a, b))
+        intervals.append((i, x, y))
     return intervals
 
 def find_invalid_indirect_horizontal_intervals(a_list):
@@ -544,43 +544,55 @@ def starts_with_tonic(a_list):
     """
     Takes a single NoteList object.
 
-    Returns True if the first non-rest note in the melody is the tonic
+    Returns an empty list if the first non-rest note in the melody is the tonic
     of the key defined by the first bar in the melody.
 
-    Returns False otherwise.
+    Returns a list containing the start time of the first melodic note,
+    otherwise.
     """
     key = a_list.track.bars[0].key.name
-    note = a_list.notes[0].name
-    return note == key
+    note = a_list.get_first_actual_note()
+    if note.name == key:
+        return []
+    else:
+        return [note.start]
+
 
 def starts_with_tonic_or_fifth(a_list):
     """
     Takes a single NoteList object.
 
-    Returns True if the first non-rest note in the melody is the tonic or the fifth
-    of the key defined by the first bar in the melody.
+    Returns an empty list if the first non-rest note in the melody is the tonic
+    or the fifth of the key defined by the first bar in the melody.
 
-    Returns False otherwise.
+    Returns a list containing the start time of the first melodic note,
+    otherwise.
     """
     key = a_list.track.bars[0].key
-    note = a_list.notes[0].name
+    note = a_list.get_first_actual_note()
     possible_notes = [key.name, Note(key).transpose('5', True).name]
-    return note in possible_notes
+    if note.name in possible_notes:
+        return []
+    else:
+        return [note.start]
 
 def ends_with_lt_tonic(a_list):
     """
     Takes a single NoteList object.
 
-    Returns True if the last two notes in the melody are the leading tone and tonic
-    of the key defined by the first bar in the melody.
+    Returns an empty list if the last two notes in the melody are the leading
+    tone and tonic of the key defined by the first bar in the melody.
 
-    Returns False otherwise.
+    Returns a list containing the start time of each infringing note, otherwise
     """
     key = a_list.track.bars[0].key
     a, b = a_list.notes[-2:]
-
     lt, tonic = Note(key).transpose('7', True).name, key.name
-    return (a.name, b.name) == (lt, tonic) and int(b) - int(a) == 1
+
+    if (a.name, b.name) == (lt, tonic) and int(b) - int(a) == 1:
+        return []
+    else:
+        return [a.start, b.start]
 
 def find_accidentals(a_list):
     """
