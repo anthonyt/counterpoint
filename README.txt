@@ -5,6 +5,10 @@ Repository for Anthony Theocharis' as-yet-unnamed CSC479 project.
 This system aims to provide a simple mechanism for the input and evaluation of
 music according to theoretical rules.
 
+Music can be read from the dictionary defined in tracks.py, or from a MIDI file.
+
+Errors will be printed to the console.
+
 This iteration of the program supports first and second species, using
 2, 3, or 4 voices, with the following caveats:
 
