@@ -117,7 +117,7 @@ def find_directions(a_list, changes):
     def get_dir(note):
         if note is None:
             direction = 0
-        if note.is_rest:
+        elif note.is_rest:
             direction = 0
         elif note.prev_actual_note is None:
             direction = 0
