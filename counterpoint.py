@@ -61,7 +61,8 @@ def main():
     parser.add_option('-s', '--species', dest='species', help='One of 1, 2, or 4. Only applies to MIDI files.', metavar='SPECIES', type='int', default=1)
     parser.add_option('-w', '--write-midi', dest='output_midi_file', help='Write midi file OUTPUT_FILE', metavar='OUTPUT_FILE')
     parser.add_option('-p', '--write-png', dest='png_file', help='Write printed music to PNG_FILE', metavar='PNG_FILE')
-    parser.add_option('-z', dest='typeset_midi_file', help="Testing option. Typeset this midi file. Must be used in combination with --write-png or --write-midi", metavar='MIDI_FILE')
+    parser.add_option('-z', dest='typeset_midi_file', help="Testing option. Read in a midi file, but do not test it for errors. Can be used with -w, -p and -l", metavar='MIDI_FILE')
+    parser.add_option('-l', dest='lilypond_file', help="Testing option. Write lilypond string to LY_FILE.", metavar="LY_FILE")
 
     options, args = parser.parse_args()
 
@@ -72,6 +73,11 @@ def main():
             to_png(string, options.png_file)
         if options.output_midi_file:
             write_Composition(options.output_midi_file, composition, verbose=True)
+        if options.lilypond_file:
+            string = from_Composition(composition)
+            lf = open(options.lilypond_file, 'w')
+            lf.write(string)
+            lf.close()
         return
 
 
@@ -99,6 +105,12 @@ def main():
         # Save the PNG
         string = from_Composition(composition)
         to_png(string, options.png_file)
+
+    if options.lilypond_file:
+        string = from_Composition(composition)
+        lf = open(options.lilypond_file, 'w')
+        lf.write(string)
+        lf.close()
 
 if __name__ == "__main__":
     main()
