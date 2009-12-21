@@ -7,11 +7,13 @@ from mingus.containers import Note, NoteContainer, Bar, Composition, Instrument,
 from mingus.extra.LilyPond import from_Composition, to_png, to_pdf
 from structures import Soprano, Alto, Tenor, Bass, NoteNode, NoteList, create_note_lists
 from rules import *
+from errors import *
+from species import first_species, second_species, third_species, fourth_species
 import sys
 from optparse import OptionParser
 
 ###
-# WE'RE GOING TO MAKE A MAJOR ASSUMPTION IN THIS PROGRAM, AND ASSUME THAT
+# WE'RE GOING TO MAKE A MAJOR ASSUMPTION IN THIS PROGRAM. WE WILL ASSUME THAT
 # NO TRACK WILL HAVE POLYPHONY. ALL NOTES IN A TRACK WILL START ONLY AFTER
 # THE PREVIOUS NOTE HAS FINISHED.
 ###
@@ -82,24 +84,33 @@ def main():
 
 
     if options.from_tracks:
+        # read the tracks from tracks.py
         composition, errors, species = setup_tracks(options.output_midi_file)
     elif options.input_midi_file:
+        # read the tracks from a midi file
         composition, errors = setup_midi(options.input_midi_file)
         species = options.species
 
     if errors:
-        print 'ERROR(S) ENCOUNTERED:'
-        print '\n'.join(errors)
-        sys.exit()
+        print >> sys.stderr, '%s: ERROR(S) ENCOUNTERED WHEN READING MUSIC:' % sys.argv[0]
+        print >> sys.stderr, '\n'.join(errors)
+        sys.exit(1)
 
-    # Compute and print out the errors.
+    # Compute any errors.
     rulesets = [first_species, second_species, third_species, fourth_species]
-    errors = rulesets[species-1](composition)
-    length = max(*[len(s) for s in errors]) + 2
-    for key in errors:
-        print key
-        print errors[key]
+    error_dict = rulesets[species-1](composition)
+
+    # Convert the errors dict to a standard format
+    errors = standardize_errors(error_dict)
+
+    # Print out the standardized errors, and their corresponding rules.
+    for error in errors:
+        print get_error_text(error)
+        rule = error[-1]
+        if rule in written_rules:
+            print "Rule:", written_rules[rule]
         print ""
+
 
     if options.png_file:
         # Save the PNG
@@ -107,6 +118,7 @@ def main():
         to_png(string, options.png_file)
 
     if options.lilypond_file:
+        # save the Lilypond file
         string = from_Composition(composition)
         lf = open(options.lilypond_file, 'w')
         lf.write(string)
@@ -114,3 +126,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
