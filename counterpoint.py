@@ -83,18 +83,24 @@ def main():
         return
 
 
+    errors = None
+    composition = None
+    species = options.species
+
     if options.from_tracks:
         # read the tracks from tracks.py
         composition, errors, species = setup_tracks(options.output_midi_file)
     elif options.input_midi_file:
         # read the tracks from a midi file
         composition, errors = setup_midi(options.input_midi_file)
-        species = options.species
 
     if errors:
         print >> sys.stderr, '%s: ERROR(S) ENCOUNTERED WHEN READING MUSIC:' % sys.argv[0]
         print >> sys.stderr, '\n'.join(errors)
         sys.exit(1)
+    elif composition is None:
+        parser.error('Insufficient arguments provided. Use the -h argument to display help.')
+        sys.exit(0)
 
     # Compute any errors.
     rulesets = [first_species, second_species, third_species, fourth_species]
