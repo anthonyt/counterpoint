@@ -172,31 +172,31 @@ def find_illegal_leaps(a_list):
     """
     Takes a single NoteList object.
 
-    Return format is identical to find_horizontal_intervals() above.
+    Return format is identical to horizontal_intervals() above.
 
     Returned tuples here will only represent those intervals that are not
     explicitly allowed by the allowed_movements list below.
     """
     allowed_movements = ['1', 'b2', '2', 'b3', '3', '4', '5', 'b6', '6']
-    intervals = find_horizontal_intervals(a_list)
+    intervals = horizontal_intervals(a_list)
     return [(i, a_list[x+1]) for x,i in enumerate(intervals) if i[0] not in allowed_movements]
 
 def find_invalid_indirect_horizontal_intervals(a_list):
     """
     Takes a single NoteList object.
 
-    Return format is identical to find_indirect_horizontal_intervals() above.
+    Return format is identical to indirect_horizontal_intervals() above.
 
     Intervals represented here, however, are only those that are not
     explicitly allowed by the allowed_intervals list below.
     """
     allowed_intervals = ['1', 'b2', '2', 'b3', '3', '4', '5', 'b6', '6']
-    intervals = find_indirect_horizontal_intervals(a_list)
+    intervals = indirect_horizontal_intervals(a_list)
     return filter(lambda x: x[0] not in allowed_intervals, intervals)
 
 def find_invalid_strong_beat_horizontal_intervals(a_list):
     allowed_intervals = ['1', 'b2', '2', 'b3', '3', '4', '5', 'b6', '6']
-    intervals = find_strong_beat_horizontal_intervals(a_list)
+    intervals = strong_beat_horizontal_intervals(a_list)
     return filter(lambda x: x[0] not in allowed_intervals, intervals)
 
 def find_missed_leap_turnarounds(a_list):
@@ -215,7 +215,7 @@ def find_missed_leap_turnarounds(a_list):
     largest_leap_without_turnaround = 6 # semitones
 
     # get horizontal intervals as semitones
-    h_i_semitones = [get_semitones(x) for x in find_horizontal_intervals(a_list)]
+    h_i_semitones = [get_semitones(x) for x in horizontal_intervals(a_list)]
 
     # get list of directions for each interval
     dirs = directions(a_list)

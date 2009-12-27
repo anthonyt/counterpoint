@@ -204,7 +204,7 @@ def local_maxima(a_list):
     """
     return local_extremities(a_list, maxima=True)
 
-def find_horizontal_intervals(a_list):
+def horizontal_intervals(a_list):
     """
     Takes a single NoteList object.
 
@@ -219,7 +219,7 @@ def find_horizontal_intervals(a_list):
         and a.next_actual_note is not None
     ]
 
-def find_indirect_horizontal_intervals(a_list):
+def indirect_horizontal_intervals(a_list):
     """
     Takes a single NoteList object.
 
@@ -259,7 +259,7 @@ def find_indirect_horizontal_intervals(a_list):
         intervals.append((i, x, y))
     return intervals
 
-def find_strong_beat_horizontal_intervals(a_list):
+def strong_beat_horizontal_intervals(a_list):
     strong_beat_notes = sbn = [x for x in a_list if x.start[1] == 0]
 
     strong_beat_pairs = [
@@ -270,7 +270,10 @@ def find_strong_beat_horizontal_intervals(a_list):
         and sbn[i+1] is not None and not sbn[i+1].is_rest
     ]
 
-    intervals = [(mintervals.determine(a, b, True), a, b) for a, b in strong_beat_pairs]
+    intervals = [
+        (mintervals.determine(a, b, True), a, b)
+        for a, b in strong_beat_pairs
+    ]
 
     return intervals
 
