@@ -3,6 +3,7 @@
 from mingus.core import intervals as mintervals
 from mingus.containers import Note
 from rules import *
+from views import *
 
 def first_species(composition):
     """
