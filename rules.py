@@ -29,7 +29,7 @@ def all_notes_line_up(a_list, b_list):
     return a_list, b_list
 
 
-def find_parallel_motion(a_list, b_list, filter_fn=None):
+def parallel_motion(a_list, b_list, filter_fn=None):
     """
     Takes two NoteList objects and an optional filter function.
 
@@ -60,11 +60,11 @@ def find_parallel_motion(a_list, b_list, filter_fn=None):
 
     return consecutives
 
-def find_invalid_parallel_intervals(a_list, b_list):
+def illegal_parallel_intervals(a_list, b_list):
     """
     Takes two NoteList objects.
 
-    Return format is identical to find_parallel_motion() above.
+    Return format is identical to parallel_motion() above.
     Sub-lists here will only contain illegal sets of parallel intervals,
     however.
 
@@ -72,7 +72,7 @@ def find_invalid_parallel_intervals(a_list, b_list):
         Only 3rds and 6ths (and their octaves) may be repeated.
     """
     allowed_parallel_intervals = ['3', '6']
-    consecutives = find_parallel_motion(a_list, b_list)
+    consecutives = parallel_motion(a_list, b_list)
 
     invalid = []
     for c in consecutives:
@@ -81,11 +81,11 @@ def find_invalid_parallel_intervals(a_list, b_list):
             invalid.append(c)
     return invalid
 
-def find_invalid_consecutive_parallels(a_list, b_list):
+def illegal_consecutive_parallels(a_list, b_list):
     """
     Takes two NoteList objects.
 
-    Return format is identical to find_parallel_motion() above.
+    Return format is identical to parallel_motion() above.
     Sub-lists here will only contain illegal sets of parallel intervals,
     however.
 
@@ -93,24 +93,24 @@ def find_invalid_consecutive_parallels(a_list, b_list):
         Any one interval may be repeated a maximum of three times consecutively.
     """
     max_consecutive_parallel = 3
-    consecutives = find_parallel_motion(a_list, b_list)
+    consecutives = parallel_motion(a_list, b_list)
 
     return [c for c in consecutives if len(c) > max_consecutive_parallel]
 
-def find_coincident_maxima(a_list, b_list):
+def coincident_maxima(a_list, b_list):
     """
     Takes two NoteList objects.
 
-    Return format is identical to find_local_maxima() above.
+    Return format is identical to local_maxima() above.
     Tuples returned here will only include note-onsets that are local maxima
     in both provided NoteList melodies, however.
     """
-    a_maxima = find_local_maxima(a_list)
-    b_maxima = find_local_maxima(b_list)
+    a_maxima = local_maxima(a_list)
+    b_maxima = local_maxima(b_list)
 
     return [x for x in a_maxima if x in b_maxima]
 
-def find_voice_crossing(b_list, a_list, note_spacing=2, note_filter_fn=None):
+def voice_crossing(b_list, a_list, note_spacing=2, note_filter_fn=None):
     """
     Takes two NoteList objects and an integer.
 
@@ -155,7 +155,7 @@ def find_voice_crossing(b_list, a_list, note_spacing=2, note_filter_fn=None):
     f_v_c(b_list, a_list, lambda a,b: a <= b)
     return crossings
 
-def find_illegal_intervals(a_list, b_list):
+def illegal_vertical_intervals(a_list, b_list):
     """
     Takes two NoteList objects.
 
@@ -168,7 +168,7 @@ def find_illegal_intervals(a_list, b_list):
     pairs = vertical_intervals(a_list, b_list)
     return [(i, t) for i, t in pairs if i[0] not in allowed_intervals]
 
-def find_illegal_leaps(a_list):
+def illegal_horizontal_intervals(a_list):
     """
     Takes a single NoteList object.
 
@@ -181,7 +181,7 @@ def find_illegal_leaps(a_list):
     intervals = horizontal_intervals(a_list)
     return [(i, a_list[x+1]) for x,i in enumerate(intervals) if i[0] not in allowed_movements]
 
-def find_invalid_indirect_horizontal_intervals(a_list):
+def illegal_indirect_horizontal_intervals(a_list):
     """
     Takes a single NoteList object.
 
@@ -194,12 +194,12 @@ def find_invalid_indirect_horizontal_intervals(a_list):
     intervals = indirect_horizontal_intervals(a_list)
     return filter(lambda x: x[0] not in allowed_intervals, intervals)
 
-def find_invalid_strong_beat_horizontal_intervals(a_list):
+def illegal_strong_beat_horizontal_intervals(a_list):
     allowed_intervals = ['1', 'b2', '2', 'b3', '3', '4', '5', 'b6', '6']
     intervals = strong_beat_horizontal_intervals(a_list)
     return filter(lambda x: x[0] not in allowed_intervals, intervals)
 
-def find_missed_leap_turnarounds(a_list):
+def missed_leap_turnarounds(a_list):
     """
     Takes a single NoteList object.
 
@@ -249,7 +249,7 @@ def find_missed_leap_turnarounds(a_list):
     # the note following these ones need to move in opposite direction by step
     return [dirs[i+1][1] for i in invalid_leaps]
 
-def find_direct_motion(a_list, b_list):
+def direct_motion(a_list, b_list):
     """
     Takes two NoteList objects.
 
@@ -329,7 +329,7 @@ def ends_with_lt_tonic(a_list):
     else:
         return [a.start, b.start]
 
-def find_accidentals(a_list):
+def accidentals(a_list):
     """
     Takes a single NoteList object.
 
@@ -344,7 +344,7 @@ def find_accidentals(a_list):
         and not note.is_rest
     ]
 
-def find_legal_dissonances(a_list, b_list):
+def legal_dissonances(a_list, b_list):
     """
     Takes two NoteList objects.
 

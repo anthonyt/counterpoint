@@ -26,10 +26,10 @@ def first_species(composition):
     turnaround_errors = {}
     accidental_errors = {}
     for x in n:
-        horizontal_errors[x] = find_illegal_leaps(n[x])
-        indirect_horizontal_errors[x] = find_invalid_indirect_horizontal_intervals(n[x])
-        turnaround_errors[x] = find_missed_leap_turnarounds(n[x])
-        accidental_errors[x] = find_accidentals(n[x])
+        horizontal_errors[x] = illegal_horizontal_intervals(n[x])
+        indirect_horizontal_errors[x] = illegal_indirect_horizontal_intervals(n[x])
+        turnaround_errors[x] = missed_leap_turnarounds(n[x])
+        accidental_errors[x] = accidentals(n[x])
 
     # find errors between pairs of voices.
     alignment_errors = {}
@@ -41,12 +41,12 @@ def first_species(composition):
     direct_motion_errors = {}
     for x, y in voice_combos:
         alignment_errors[(x, y)] = all_notes_line_up(n[x], n[y])
-        parallel_errors[(x, y)] = find_invalid_parallel_intervals(n[x], n[y])
-        consecutive_parallel_errors[(x, y)] = find_invalid_consecutive_parallels(n[x], n[y])
-        high_point_errors[(x, y)] = find_coincident_maxima(n[x], n[y])
-        voice_crossing_errors[(x, y)] = find_voice_crossing(n[x], n[y])
-        vertical_interval_errors[(x, y)] = find_illegal_intervals(n[x], n[y])
-        direct_motion_errors[(x, y)] = find_direct_motion(n[x], n[y])
+        parallel_errors[(x, y)] = illegal_parallel_intervals(n[x], n[y])
+        consecutive_parallel_errors[(x, y)] = illegal_consecutive_parallels(n[x], n[y])
+        high_point_errors[(x, y)] = coincident_maxima(n[x], n[y])
+        voice_crossing_errors[(x, y)] = voice_crossing(n[x], n[y])
+        vertical_interval_errors[(x, y)] = illegal_vertical_intervals(n[x], n[y])
+        direct_motion_errors[(x, y)] = direct_motion(n[x], n[y])
 
     return dict(
         # find errors in specific voices
@@ -123,9 +123,9 @@ def second_species(composition):
     repeated_notes = {}
     strong_beat_horizontals = {}
     for x in n:
-        horizontal_errors[x] = find_illegal_leaps(n[x])
-        turnaround_errors[x] = find_missed_leap_turnarounds(n[x])
-        accidental_errors[x] = find_accidentals(n[x])
+        horizontal_errors[x] = illegal_horizontal_intervals(n[x])
+        turnaround_errors[x] = missed_leap_turnarounds(n[x])
+        accidental_errors[x] = accidentals(n[x])
 
         # no voice is allowed to repeat notes
         repeated = []
@@ -138,7 +138,7 @@ def second_species(composition):
         repeated_notes[x] = repeated
 
         # leaps greater than a 5th may only go from strong to weak beats
-        intervals = find_horizontal_intervals(n[x])
+        intervals = horizontal_intervals(n[x])
         weak_horizontal_errors[x] = [
             (interval, n[x][i+1])
             for i,interval in enumerate(intervals)
@@ -148,7 +148,7 @@ def second_species(composition):
 
         # find invalid intervals between consecutive downbeats.
         strong_beat_horizontals[x] = \
-            find_invalid_strong_beat_horizontal_intervals(n[x])
+            illegal_strong_beat_horizontal_intervals(n[x])
 
     # find errors between pairs of voices.
     parallel_errors = {}
@@ -159,31 +159,31 @@ def second_species(composition):
     vertical_interval_errors = {}
     direct_motion_errors = {}
     for x, y in voice_combos:
-        parallel_errors[(x, y)] = find_invalid_parallel_intervals(n[x], n[y])
+        parallel_errors[(x, y)] = illegal_parallel_intervals(n[x], n[y])
         # We also have to consider consecutive downbeats, now, when looking for
         # parallel intervals.
         downbeat_filter = lambda x: x[1][1] == 0
         parallel_downbeat_errors[(x, y)] = \
-            find_parallel_motion(n[x], n[y], filter_fn=downbeat_filter)
-        consecutive_parallel_errors[(x, y)] = find_invalid_consecutive_parallels(n[x], n[y])
-        high_point_errors[(x, y)] = find_coincident_maxima(n[x], n[y])
+            parallel_motion(n[x], n[y], filter_fn=downbeat_filter)
+        consecutive_parallel_errors[(x, y)] = illegal_consecutive_parallels(n[x], n[y])
+        high_point_errors[(x, y)] = coincident_maxima(n[x], n[y])
 
         # second species has different rules for vertical intervals
-        dissonances = find_illegal_intervals(n[x], n[y])
-        legal_dissonances = find_legal_dissonances(n[x], n[y])
+        dissonances = illegal_vertical_intervals(n[x], n[y])
+        legal_dissonances = legal_dissonances(n[x], n[y])
         vertical_interval_errors[(x, y)] = [
             d for d in dissonances
             if d not in legal_dissonances
         ]
 
-        direct_motion_errors[(x, y)] = find_direct_motion(n[x], n[y])
+        direct_motion_errors[(x, y)] = direct_motion(n[x], n[y])
 
         # voice crossing in the form of unison on weak beat is okay now.
-        voice_crossings = find_voice_crossing(n[x], n[y])
+        voice_crossings = voice_crossing(n[x], n[y])
         weak_beat_filter = lambda x: x.beat == 0.5
         legal_crossings = [
             v
-            for v in find_voice_crossing(
+            for v in voice_crossing(
                 n[x], n[y],
                 note_spacing=1,
                 note_filter_fn=weak_beat_filter
