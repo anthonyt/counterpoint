@@ -133,6 +133,57 @@ def find_directions(a_list):
 
     return directions
 
+def find_local_extremities(a_list, maxima=True):
+    """
+    Takes a NoteList object and an (optional) Boolean.
+
+    Boolean determines whether to find local maxima or minima.
+
+    Returns a list of tuples of the form returned by get_note_onsets().
+    Each of these (int: bar #, float: beat #) tuples will represent the onset
+    of a note that is a local minimum/maximum in the melody in a_list.
+    """
+    if maxima:
+        # if finding maxima
+        extremity_dir = 1
+    else:
+        # if finding minima
+        extremity_dir = -1
+
+    dirs = find_directions(a_list)
+    extremities = []
+
+    # started on a low note?
+    for cur, time in dirs:
+        if cur == 0:
+            continue
+        elif cur == extremity_dir:
+            # This is a bit tricky.
+            # If the melody starts with a rest, just looking at the directions
+            # will imply that the rest is a minimum, so we must find the first
+            # non-rest note in the melody. That will be our minimum.
+            note = a_list.get_first_actual_note()
+            if note is not None:
+                extremities.append((note.bar, note.beat))
+        break
+
+    prev_d = 0
+    prev_t = ()
+    for dir, time in dirs:
+        if prev_d == -extremity_dir:
+            if dir == 0:
+                continue
+            if dir == extremity_dir:
+                extremities.append(prev_t)
+        prev_d = dir
+        prev_t = time
+
+    # ended on a low note
+    if dir == -extremity_dir:
+        extremities.append(time)
+
+    return extremities
+
 def find_local_minima(a_list):
     """
     Takes a NoteList object.
@@ -141,39 +192,7 @@ def find_local_minima(a_list):
     Each of these (int: bar #, float: beat #) tuples will represent the onset
     of a note that is a local minimum in the melody in a_list.
     """
-    dirs = find_directions(a_list)
-    minima = []
-
-    # started on a low note?
-    for cur, time in dirs:
-        if cur == 0:
-            continue
-        elif cur == 1:
-            # This is a bit tricky.
-            # If the melody starts with a rest, just looking at the directions
-            # will imply that the rest is a minimum, so we must find the first
-            # non-rest note in the melody. That will be our minimum.
-            note = a_list.get_first_actual_note()
-            if note is not None:
-                minima.append((note.bar, note.beat))
-        break
-
-    prev_d = 0
-    prev_t = ()
-    for dir, time in dirs:
-        if prev_d == -1:
-            if dir == 0:
-                continue
-            if dir == 1:
-                minima.append(prev_t)
-        prev_d = dir
-        prev_t = time
-
-    # ended on a low note
-    if dir == -1:
-        minima.append(time)
-
-    return minima
+    return find_local_extremities(a_list, maxima=False)
 
 def find_local_maxima(a_list):
     """
@@ -183,39 +202,7 @@ def find_local_maxima(a_list):
     Each of these (int: bar #, float: beat #) tuples will represent the onset
     of a note that is a local maximum in the melody in a_list.
     """
-    dirs = find_directions(a_list)
-    maxima = []
-
-    # started on a high note?
-    for cur, time in dirs:
-        if cur == 0:
-            continue
-        elif cur == -1:
-            # This is a bit tricky.
-            # If the melody starts with a rest, just looking at the directions
-            # will imply that the rest is a maximum, so we must find the first
-            # non-rest note in the melody. That will be our maximum.
-            note = a_list.get_first_actual_note()
-            if note is not None:
-                maxima.append((note.bar, note.beat))
-        break
-
-    prev_d = 0
-    prev_t = ()
-    for dir, time in dirs:
-        if prev_d == 1:
-            if dir == 0:
-                continue
-            if dir == -1:
-                maxima.append(prev_t)
-        prev_d = dir
-        prev_t = time
-
-    # ended on a high note
-    if dir == 1:
-        maxima.append(time)
-
-    return maxima
+    return find_local_extremities(a_list, maxima=True)
 
 def find_horizontal_intervals(a_list):
     """
