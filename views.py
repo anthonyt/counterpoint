@@ -8,8 +8,9 @@ from views import *
 
 def get_interval(note_a, note_b):
     """
-    Takes two NoteNode objects, returns a tuple of the form
-    (str: interval name, int: octaves between)
+    Takes two NoteNode objects.
+    Returns a tuple of the form:
+        (str: interval name, int: octaves between)
     """
     if note_a.is_rest or note_b.is_rest:
         name = ' '
@@ -22,12 +23,12 @@ def get_interval(note_a, note_b):
 def get_semitones(interval_tuplet):
     """
     Takes an interval tuplet of the form returned by get_interval()
-    Returns the semitone equivalent of the interval as an integer
+    Returns an int representing the semitones within the interval.
     """
     return mintervals.semitones_from_shorthand(interval_tuplet[0]) + 12*interval_tuplet[1]
 
 
-def find_changes(a_list, b_list):
+def get_note_onsets(a_list, b_list):
     """
     Takes two lists of NoteNode objects. These may be NoteList objects.
     Returns a list of tuples, each of the form:
@@ -42,7 +43,7 @@ def find_changes(a_list, b_list):
                 changes.append(note.start)
     return changes
 
-def find_intervals(a_list, b_list):
+def get_intervals(a_list, b_list):
     """
     Takes two NoteList objects.
     Returns a list of tuples, each of the form:
@@ -55,7 +56,7 @@ def find_intervals(a_list, b_list):
     """
 
     # find the intervals at each place where a note changes
-    changes = find_changes(a_list, b_list)
+    changes = get_note_onsets(a_list, b_list)
     intervals = [
         get_interval(
             a_list.get_note_playing_at(bar, beat),
@@ -70,29 +71,50 @@ def combined_directions(a_list, b_list):
     """
     Takes two NoteList objects.
     Returns a list of (3)tuples each of the form:
-        (int: a dir, int: b dir, (int: bar #, float: beat #))
+    (
+        int: a dir,
+        int: b dir,
+        (int: bar #, float: beat #)
+    )
     """
-    changes = find_changes(a_list, b_list)
-    a_dirs = find_directions(a_list, changes)
-    b_dirs = find_directions(b_list, changes)
-    return zip(a_dirs, b_dirs, changes)
+    onsets = get_note_onsets(a_list, b_list)
+    a_dirs = find_directions(a_list)
+    b_dirs = find_directions(b_list)
 
-def find_directions(a_list, changes):
+    dirs = {}
+    for time in onsets:
+        dirs[time] = (0, 0)
+    for dir, time in a_dirs:
+        dirs[time] = (dir, dirs[time])
+    for dir, time in b_dirs:
+        dirs[time] = (dirs[time], dir)
+
+    return [
+        (dirs[time][0], dirs[time][1], time)
+        for time in onsets
+    ]
+
+def find_directions(a_list):
     """
     Takes a NoteList object and a list of (bar, beat) tuples of the form
-    returned by find_changes() above.
+    returned by get_note_onsets() above.
 
-    Returns a list of integers representing the direction the melody moves
-    in the NoteList at each time specified in the 'changes' list.
+    Returns a list of tuples representing the direction the melody moves.
+    Format:
+    (
+        int: direction,
+        (int: bar #, float: beat #)
+    )
 
-    Rests are considered to be no movement.
-    The note after a rest is considered to move relative to the note before the rest.
-
+    Directions:
      1 for up
      0 for no movement
     -1 for down
+
+    Rests are considered to be no movement.
+    The note after a rest is considered to move relative to the note before the rest.
     """
-    directions = []
+
     def get_dir(note):
         if note is None:
             direction = 0
@@ -104,9 +126,10 @@ def find_directions(a_list, changes):
             direction = cmp(int(note), int(note.prev_actual_note))
         return direction
 
-    for time in changes:
-        a_note = a_list.get(*time)
-        directions.append(get_dir(a_note))
+    directions = []
+    for a_note in a_list:
+        x = (get_dir(a_note), a_note.start)
+        directions.append(x)
 
     return directions
 
@@ -114,15 +137,11 @@ def find_local_minima(a_list):
     """
     Takes a NoteList object.
 
-    Returns a list of tuples of the form returned by find_changes().
+    Returns a list of tuples of the form returned by get_note_onsets().
     Each of these (int: bar #, float: beat #) tuples will represent the onset
     of a note that is a local minimum in the melody in a_list.
     """
-
-    changes = find_changes(a_list, [])
-    dirs = find_directions(a_list, changes)
-    dirs = zip(dirs, changes)
-
+    dirs = find_directions(a_list)
     minima = []
 
     # started on a low note?
@@ -160,14 +179,11 @@ def find_local_maxima(a_list):
     """
     Takes a NoteList object.
 
-    Returns a list of tuples of the form returned by find_changes().
+    Returns a list of tuples of the form returned by get_note_onsets().
     Each of these (int: bar #, float: beat #) tuples will represent the onset
     of a note that is a local maximum in the melody in a_list.
     """
-    changes = find_changes(a_list, [])
-    dirs = find_directions(a_list, changes)
-    dirs = zip(dirs, changes)
-
+    dirs = find_directions(a_list)
     maxima = []
 
     # started on a high note?

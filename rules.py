@@ -33,14 +33,14 @@ def find_parallel_motion(a_list, b_list, filter_fn=None):
     """
     Takes two NoteList objects and an optional filter function.
 
-    The filter function, if provided, is used on the result of find_intervals().
+    The filter function, if provided, is used on the result of get_intervals().
 
     Returns a list of lists.
     Each sub-list list will contain tuples representing intervals that appear at least
     twice.
-    Each sub-list is of the form returned by find_intervals().
+    Each sub-list is of the form returned by get_intervals().
     """
-    pairs = find_intervals(a_list, b_list)
+    pairs = get_intervals(a_list, b_list)
 
 
     if callable(filter_fn):
@@ -159,13 +159,13 @@ def find_illegal_intervals(a_list, b_list):
     """
     Takes two NoteList objects.
 
-    Return format is identical to find_intervals() above.
+    Return format is identical to get_intervals() above.
 
     Returned tuples here, however, will only represent intervals that are
     not explicitly allowed by the allowed_intervals list.
     """
     allowed_intervals = ['1', 'b3', '3', '4', '5', 'b6', '6']
-    pairs = find_intervals(a_list, b_list)
+    pairs = get_intervals(a_list, b_list)
     return [(i, t) for i, t in pairs if i[0] not in allowed_intervals]
 
 def find_illegal_leaps(a_list):
@@ -203,7 +203,7 @@ def find_missed_leap_turnarounds(a_list):
     """
     Takes a single NoteList object.
 
-    Return format is identical to find_changes() above.
+    Return format is identical to get_note_onsets() above.
 
     The only tuples returned here, however, are those that represent the
     onset of a note which has been approached by a leap greater than
@@ -218,7 +218,7 @@ def find_missed_leap_turnarounds(a_list):
     h_i_semitones = [get_semitones(x) for x in find_horizontal_intervals(a_list)]
 
     # get list of directions for each interval
-    changes = find_changes(a_list, [])
+    changes = get_note_onsets(a_list, [])
     dirs = find_directions(a_list, changes)
     dirs = zip(dirs, changes)
 
@@ -255,7 +255,7 @@ def find_direct_motion(a_list, b_list):
     """
     Takes two NoteList objects.
 
-    Return format is identical to find_intervals() above.
+    Return format is identical to get_intervals() above.
 
     Intervals returned here, however, only represent intervals explicitly
     defined in the invalid_direct_intervals list below, which have been
@@ -264,7 +264,7 @@ def find_direct_motion(a_list, b_list):
     """
     invalid_direct_intervals = ['5', '1']
 
-    intervals = find_intervals(a_list, b_list)
+    intervals = get_intervals(a_list, b_list)
     directions = combined_directions(a_list, b_list)
 
     invalid_directs = []
@@ -350,7 +350,7 @@ def find_legal_dissonances(a_list, b_list):
     """
     Takes two NoteList objects.
 
-    Return format is identical to find_intervals() above.
+    Return format is identical to get_intervals() above.
 
     Returned tuples here, however, will only represent intervals that are
     illegal in first species counterpoint, but legal in second species.
@@ -395,7 +395,7 @@ def find_legal_dissonances(a_list, b_list):
         ))
 
     allowed_intervals = ['1', 'b3', '3', '4', '5', 'b6', '6']
-    pairs = find_intervals(a_list, b_list)
+    pairs = get_intervals(a_list, b_list)
     weak_intervals = [(i, t) for i, t in pairs if t[1] == 0.5]
     weak_dissonances = [(i, t) for i, t in weak_intervals if i[0] not in allowed_intervals]
     safe_dissonances = [
