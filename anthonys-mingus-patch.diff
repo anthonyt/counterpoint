@@ -1,0 +1,558 @@
+diff --git a/mingus/containers/Bar.py b/mingus/containers/Bar.py
+index b3418b9..93e0acf 100644
+--- a/mingus/containers/Bar.py
++++ b/mingus/containers/Bar.py
+@@ -79,6 +79,23 @@ a !MeterFormatError will be raised."""
+                 "The meter argument '%s' is not an understood representation of a meter. Expecting a tuple."\
+                  % meter
+ 
++    def fill_with_rests(self):
++        """Fills whatever space in this bar isn't currently used by
++NoteContainers with None.
++Assumes that all entries in self.bar are in chronological order."""
++        last_beat = 0.0
++        for x in self.bar[:]:
++            start, duration, notes = x
++
++            if start > last_beat:
++                nc = NoteContainer([])
++                rest_duration = int(1./(start - last_beat))
++                rest = [last_beat, rest_duration, nc]
++                index = self.bar.index(x)
++                self.bar.insert(index, rest)
++
++            last_beat = start + 1./duration
++
+     def place_notes(self, notes, duration):
+         """Places the notes on the `current_beat`. Notes can be strings, \
+ [refMingusContainersNote Notes], list of strings, list of \
+@@ -89,7 +106,30 @@ enough room for a note of that duration.)"""
+ 
+         # note should be able to be one of strings, lists, Notes or
+         # NoteContainers
++        if self.place_notes_at(notes, duration, self.current_beat):
++            self.current_beat += 1.0 / duration
++            return True
+ 
++        return False
++
++
++    def place_notes_at(self, notes, duration, at):
++        """Places notes at the index `at`"""
++
++        # FIXME: floating point operations like this are massively unsafe
++        #        thanks to rounding errors in the binary representation
++        if (at + 1.0 / duration) > self.length and self.length != 0.0:
++            # no room in bar at that location.
++            return False
++
++        # if possible, find a note container that already has this
++        # position and duration
++        nc = None
++        for x in self.bar:
++            if x[0] == at and x[1] == duration:
++                nc = x[2]
++
++        # Convert out input to the desired NoteContainer type
+         if hasattr(notes, 'notes'):
+             pass
+         elif hasattr(notes, 'name'):
+@@ -98,20 +138,14 @@ enough room for a note of that duration.)"""
+             notes = NoteContainer(notes)
+         elif type(notes) == list:
+             notes = NoteContainer(notes)
+-        if self.current_beat + 1.0 / duration <= self.length or self.length\
+-             == 0.0:
+-            self.bar.append([self.current_beat, duration, notes])
+-            self.current_beat += 1.0 / duration
+-            return True
+-        else:
+-            return False
+ 
+-    def place_notes_at(self, notes, at):
+-        """Places notes at the index `at`"""
++        # Create new beat or add notes to old nc
++        if nc is None:
++            self.bar.append([at, duration, notes])
++        else:
++            nc += notes
+ 
+-        for x in self.bar:
+-            if x[0] == at:
+-                x[0][2] += notes
++        return True
+ 
+     def place_rest(self, duration):
+         """Places a rest of `duration` on the `current_beat`. The same as \
+@@ -152,6 +186,20 @@ Bar"""
+                     x[0][1] = to
+                     diff = 1 / cur - 1 / to
+ 
++    def get_notes_playing_at(self, at):
++        nc = NoteContainer()
++        for x in self.bar:
++            if x[0] <= at and (x[0] + (1./x[1])) > at:
++                nc += x[2]
++        return nc
++
++    def get_notes_starting_at(self, at):
++        nc = NoteContainer()
++        for x in self.bar:
++            if x[0] == at:
++                nc += x[2]
++        return nc
++
+     def get_range(self):
+         """Returns the highest and the lowest note in a tuple"""
+ 
+diff --git a/mingus/containers/Instrument.py b/mingus/containers/Instrument.py
+index c54d5f2..e7f83d8 100644
+--- a/mingus/containers/Instrument.py
++++ b/mingus/containers/Instrument.py
+@@ -40,8 +40,9 @@ examples)."""
+ 
+     name = 'Instrument'
+     range = (Note('C', 0), Note('C', 8))
+-    clef = 'bass and treble'
++    clef = 'treble'
+     tuning = None  # optional StringTuning object
++    can_play_rests = True
+ 
+     def __init__(self):
+         pass
+@@ -82,6 +83,10 @@ so, `False` otherwise"""
+         """Will test if the notes lie within the range of the instrument. Returns \
+ `True` if so, `False` otherwise."""
+ 
++        if notes is None and self.can_play_rests:
++            # asking if we can play rests
++            return True
++
+         if hasattr(notes, 'notes'):
+             notes = notes.notes
+         if type(notes) != list:
+@@ -110,7 +115,7 @@ class Guitar(Instrument):
+ 
+     name = 'Guitar'
+     range = (Note('E', 3), Note('E', 7))
+-    clef = 'Treble'
++    clef = 'treble'
+ 
+     def __init__(self):
+         Instrument.__init__(self)
+diff --git a/mingus/containers/Note.py b/mingus/containers/Note.py
+index d76e86e..370fbf5 100644
+--- a/mingus/containers/Note.py
++++ b/mingus/containers/Note.py
+@@ -173,6 +173,7 @@ octave."""
+         else:
+             if self > Note(old, o_octave):
+                 self.octave -= 1
++        return self
+ 
+     def from_int(self, integer):
+         """Sets the Note corresponding to the integer. 0 is a C on octave 0, 12 is \
+diff --git a/mingus/core/intervals.py b/mingus/core/intervals.py
+index 7803047..2bf3fbb 100644
+--- a/mingus/core/intervals.py
++++ b/mingus/core/intervals.py
+@@ -317,6 +317,23 @@ def invert(interval):
+     interval.reverse()
+     return res
+ 
++def semitones_from_shorthand(shorthand):
++    basic = {
++        '1': 0,
++        '2': 2,
++        '3': 4,
++        '4': 5,
++        '5': 7,
++        '6': 9,
++        '7': 11
++    }
++    base = basic[shorthand[-1]]
++    for x in shorthand:
++        if x == '#':
++            base += 1
++        elif x == 'b':
++            base -= 1
++    return base
+ 
+ def determine(note1, note2, shorthand=False):
+     """Names the interval between note1 and note2.
+@@ -341,6 +358,18 @@ def determine(note1, note2, shorthand=False):
+ 'perfect fourth'
+ }}}"""
+ 
++    if hasattr(note1, 'octave') and hasattr(note2, 'octave'):
++        if int(note1) > int(note2):
++            note3 = note2
++            note2 = note1
++            note1 = note3
++            del note3
++
++    if hasattr(note1, 'name'):
++        note1 = note1.name
++    if hasattr(note2, 'name'):
++        note2 = note2.name
++
+     # Corner case for unisons ('A' and 'Ab', for instance)
+ 
+     if note1[0] == note2[0]:
+diff --git a/mingus/core/notes.py b/mingus/core/notes.py
+index e92b91c..7ff13bb 100644
+--- a/mingus/core/notes.py
++++ b/mingus/core/notes.py
+@@ -185,7 +185,7 @@ def diminish(note):
+         return note[:-1]
+ 
+ 
+-def to_major(note):
++def relative_major(note):
+     """Returns the major of `note`.
+     Example:
+ {{{
+@@ -196,7 +196,7 @@ def to_major(note):
+     return intervals.minor_third(note)
+ 
+ 
+-def to_minor(note):
++def relative_minor(note):
+     """Returns the minor of note.
+     Example:
+ {{{
+diff --git a/mingus/extra/LilyPond.py b/mingus/extra/LilyPond.py
+index 24b30c4..58e16f7 100644
+--- a/mingus/extra/LilyPond.py
++++ b/mingus/extra/LilyPond.py
+@@ -173,9 +173,9 @@ the key and the time should be shown."""
+     # Process the time
+ 
+     if showtime:
+-        return '{ \\time %d/%d %s}' % (bar.meter[0], bar.meter[1], result)
++        return '{ \\time %d/%d %s} \\bar "|" ' % (bar.meter[0], bar.meter[1], result)
+     else:
+-        return '{ %s}' % result
++        return '{ %s} \\bar "|" ' % result
+ 
+ 
+ def from_Track(track):
+@@ -204,7 +204,11 @@ equivalent in a string."""
+         result += from_Bar(bar, showkey, showtime) + ' '
+         lastkey = bar.key
+         lasttime = bar.meter
+-    return '{ %s}' % result
++
++    clef = ''
++    if track.instrument is not None:
++        clef = '\\clef ' + track.instrument.clef
++    return '\\new Staff { %s%s}' % (clef, result)
+ 
+ 
+ def from_Composition(composition):
+@@ -217,8 +221,16 @@ Composition] in a string"""
+         return False
+     result = '\\header { title = "%s" composer = "%s" opus = "%s" } '\
+          % (composition.title, composition.author, composition.subtitle)
++
++    result += '\\new StaffGroup << '
++
+     for track in composition.tracks:
+-        result += from_Track(track) + ' '
++        for bar in track.bars:
++            if bar:
++                result += from_Track(track) + ' '
++                break
++
++    result += '>> '
+     return result[:-1]
+ 
+ 
+@@ -242,7 +254,7 @@ def save_string_and_execute_LilyPond(ly_string, filename, command):
+     """A helper function for to_png and to_pdf. Should not be used directly"""
+ 
+     ly_string = '\\version "2.10.33"\n' + ly_string
+-    if filename[-4] in ['.pdf' or '.png']:
++    if filename[-4:] in ['.pdf', '.png']:
+         filename = filename[:-4]
+     try:
+         f = open(filename + '.ly', 'w')
+diff --git a/mingus/midi/MidiFileIn.py b/mingus/midi/MidiFileIn.py
+index b47753c..17def10 100644
+--- a/mingus/midi/MidiFileIn.py
++++ b/mingus/midi/MidiFileIn.py
+@@ -79,93 +79,131 @@ class MidiFile:
+             print "Don't know how to parse this yet"
+             return c
+         ticks_per_beat = header[2]['ticks_per_beat']
++
+         for track in track_data:
+-            t = Track()
+-            b = Bar()
++            # this loop will gather data for all notes,
++            # set up keys and time signatures for all bars
++            # and set the tempo and instrument for the track.
++
+             metronome = 1  # Tick once every quarter note
+             thirtyseconds = 8  # 8 thirtyseconds in a quarter note
++            step = 256.0 # WARNING: Assumes our smallest desired quantization step is a 256th note.
++
+             meter = (4, 4)
+             key = 'C'
+-            for e in track:
+-                (deltatime, event) = e
+-                duration = float(deltatime) / (ticks_per_beat * 4.0)
+-                if duration != 0.0:
+-                    duration = 1.0 / duration
++            bar = 0
++            beat = 0
++            now = (bar, beat)
++            b = None
++
++            started_notes = {}
++            finished_notes = {}
++            b = Bar(key=key, meter=meter)
++            bars = [b]
++
++            bpm = None
++            instrument = None
++            track_name = None
++
++            for deltatime, event in track:
+                 if deltatime != 0:
+-                    if not b.place_notes(NoteContainer(), duration):
+-                        t + b
+-                        b = Bar(key, meter)
+-                        b.place_notes(NoteContainer(), duration)
++                    duration = (ticks_per_beat * 4.0) / float(deltatime)
++
++                    dur_q = int(round(step/duration))
++                    length_q = int(b.length * step)
++
++                    o_bar = bar
++                    c_beat = beat + dur_q
++                    bar += int(c_beat / length_q)
++                    beat = c_beat % length_q
++
++                    while o_bar < bar:
++                        o_bar += 1
++                        o_key = b.key
++                        b = Bar(key=key, meter=meter)
++                        b.key = o_key
++                        bars.append(b)
++
++                    now = (bar, beat)
+ 
+                 if event['event'] == 8:
+-                    if deltatime == 0:
+-                        pass
+-                elif event['event'] == 9:
++                # note off
++                    channel = event['channel']
++                    note_int = event['param1']
++                    velocity = event['param2']
++                    note_name = notes.int_to_note(note_int % 12)
++                    octave = note_int / 12 - 1
++
++                    note = Note(note_name, octave)
++                    note.channel = channel
++                    note.velocity = velocity
+ 
++                    x = (channel, note_int)
++                    start_time = started_notes[x]
++                    del started_notes[x]
++                    end_time = now
++
++                    y = (start_time, end_time)
++                    if y not in finished_notes:
++                        finished_notes[y] = []
++
++                    finished_notes[y].append(note)
++
++                elif event['event'] == 9:
+                 # note on
++                    channel = event['channel']
++                    note_int = event['param1']
++                    velocity = event['param2']
++                    x = (channel, note_int)
+ 
+-                    n = Note(notes.int_to_note(event['param1'] % 12),
+-                             event['param1'] / 12 - 1)
+-                    n.channel = event['channel']
+-                    n.velocity = event['param2']
+-                    if len(b.bar) > 0:
+-                        b.bar[-1][2] + n
+-                    else:
+-                        b + n
+-                elif event['event'] == 10:
++                    # add the note to the current NoteContainer
++                    started_notes[x] = now
+ 
++                elif event['event'] == 10:
+                 # note aftertouch
+-
+                     pass
+-                elif event['event'] == 11:
+ 
++                elif event['event'] == 11:
+                 # controller select
+-
+                     pass
+-                elif event['event'] == 12:
+ 
++                elif event['event'] == 12:
+                 # program change
+-
++                # WARNING: only the last change in instrument will get saved.
+                     i = MidiInstrument()
+                     i.instrument_nr = event['param1']
+-                    t.instrument = i
+-                elif event['event'] == 0x0f:
++                    instrument = i
+ 
++                elif event['event'] == 0x0f:
+                 # meta event Text
+-
+                     if event['meta_event'] == 1:
+                         pass
+-                    elif event['meta_event'] == 3:
+ 
++                    elif event['meta_event'] == 3:
+                     # Track name
++                        track_name = event['data']
+ 
+-                        t.name = event['data']
+                     elif event['meta_event'] == 6:
+-
+                     # Marker
+-
+                         pass
+-                    elif event['meta_event'] == 7:
+ 
++                    elif event['meta_event'] == 7:
+                     # Cue Point
+-
+                         pass
+-                    elif event['meta_event'] == 47:
+ 
++                    elif event['meta_event'] == 47:
+                     # End of Track
+-
+                         pass
+-                    elif event['meta_event'] == 81:
+-
+-                    # Set tempo warning Only the last change in bpm will get
+-                    # saved currently
+ 
++                    elif event['meta_event'] == 81:
++                    # Set tempo
++                    # WARNING: Only the last change in bpm will get saved
+                         mpqn = self.bytes_to_int(event['data'])
++                        bpm_o = bpm
+                         bpm = 60000000 / mpqn
+-                    elif event['meta_event'] == 88:
+ 
++                    elif event['meta_event'] == 88:
+                     # Time Signature
+-
+                         d = event['data']
+                         thirtyseconds = self.bytes_to_int(d[3])
+                         metronome = self.bytes_to_int(d[2]) / 24.0
+@@ -173,10 +211,9 @@ class MidiFile:
+                         numer = self.bytes_to_int(d[0])
+                         meter = (numer, denom)
+                         b.set_meter(meter)
+-                    elif event['meta_event'] == 89:
+ 
++                    elif event['meta_event'] == 89:
+                     # Key Signature
+-
+                         d = event['data']
+                         sharps = self.bytes_to_int(d[0])
+                         minor = self.bytes_to_int(d[0])
+@@ -190,12 +227,66 @@ class MidiFile:
+                             else:
+                                 key = intervals.major_fifth(key)
+                         b.key = Note(key)
++
+                     else:
+                         print 'Unsupported META event', event['meta_event']
++
+                 else:
+                     print 'Unsupported MIDI event', event
+-            t + b
++
++            t = Track(instrument)
++            t.name = track_name
++
++            sorted_notes = {}
++
++            # sort the notes (so they are added to the bars in order)
++            # this loop will also split up notes that span more than one bar.
++            for x in finished_notes:
++                (start_bar, start_beat), (end_bar, end_beat) = x
++                if end_beat == 0:
++                    end_bar -= 1
++                    end_beat = int(bars[end_bar].length * step)
++
++                while start_bar <= end_bar:
++                    nc = NoteContainer(finished_notes[x])
++                    b = bars[start_bar]
++
++                    if start_bar < end_bar:
++                        # only executes when note spans more than one bar.
++                        length_q = int(b.length * step)
++                        dur = int(step/(length_q - start_beat))
++                    else:
++                        # always executes - add the final section of this note.
++                        dur = int(step/(end_beat-start_beat))
++
++                    if start_beat != 0:
++                        at = float(start_beat)/step
++                    else:
++                        at = 0.0
++
++                    if start_bar not in sorted_notes:
++                        sorted_notes[start_bar] = {}
++                    if at not in sorted_notes[start_bar]:
++                        sorted_notes[start_bar][at] = (dur, nc)
++
++                    # set our offsets for the next loop
++                    start_beat = 0
++                    start_bar += 1
++
++            # add all notes to all bars in order.
++            for start_bar in sorted(sorted_notes.keys()):
++                for at in sorted(sorted_notes[start_bar].keys()):
++                    dur, nc = sorted_notes[start_bar][at]
++                    bars[start_bar].place_notes_at(nc, dur, at)
++
++            # add the bars to the track, in order
++            for b in bars:
++                b.fill_with_rests()
++                t + b
++
++            # add the track to the composition
+             c.tracks.append(t)
++
+         return (c, bpm)
+ 
+     def parse_midi_file_header(self, fp):
+@@ -435,3 +526,4 @@ if __name__ == '__main__':
+     fluidsynth.init()
+     (m, bpm) = MIDI_to_Composition(argv[1])
+     MidiFileOut.write_Composition('test.mid', m, bpm)
++
+diff --git a/mingus/midi/MidiTrack.py b/mingus/midi/MidiTrack.py
+index 2f5d054..53e3569 100644
+--- a/mingus/midi/MidiTrack.py
++++ b/mingus/midi/MidiTrack.py
+@@ -306,7 +306,7 @@ track_data and the end of track meta event."""
+ 
+     def track_name_event(self, name):
+         """Returns the bytes for a track name meta event."""
+-
++        name = str(name)
+         l = self.int_to_varbyte(len(name))
+         return '\x00' + META_EVENT + TRACK_NAME + l + name
+ 
