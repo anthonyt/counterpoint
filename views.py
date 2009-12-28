@@ -121,10 +121,12 @@ def combined_directions(a_list, b_list):
     dirs = {}
     for time in onsets:
         dirs[time] = (0, 0)
+
     for dir, time in a_dirs:
-        dirs[time] = (dir, dirs[time])
+        dirs[time] = (dir, dirs[time][1])
+
     for dir, time in b_dirs:
-        dirs[time] = (dirs[time], dir)
+        dirs[time] = (dirs[time][0], dir)
 
     return [
         (dirs[time][0], dirs[time][1], time)
