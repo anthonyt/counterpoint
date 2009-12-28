@@ -89,9 +89,7 @@ def directions(a_list):
     """
 
     def get_dir(note):
-        if note is None:
-            direction = 0
-        elif note.is_rest:
+        if note.is_rest:
             direction = 0
         elif note.prev_actual_note is None:
             direction = 0
@@ -153,7 +151,7 @@ def local_extremities(a_list, maxima=True):
     dirs = directions(a_list)
     extremities = []
 
-    # started on a low note?
+    # started on a high/low note?
     for cur, time in dirs:
         if cur == 0:
             continue
@@ -178,7 +176,7 @@ def local_extremities(a_list, maxima=True):
         prev_d = dir
         prev_t = time
 
-    # ended on a low note
+    # ended on a high/low note
     if dir == extremity_dir:
         extremities.append(time)
 
@@ -228,9 +226,9 @@ def indirect_horizontal_intervals(a_list):
 
     Each tuple is of the form:
     (
+        (str: interval name, int: octaves between),
         (int: bar #, float: beat #),
-        (int: bar #, float: beat #),
-        (str: interval name, int: octaves between)
+        (int: bar #, float: beat #)
     )
     """
     maxima = local_maxima(a_list)
@@ -289,7 +287,6 @@ def parallel_motion(a_list, b_list, filter_fn=None):
     Each sub-list is of the form returned by vertical_intervals().
     """
     pairs = vertical_intervals(a_list, b_list)
-
 
     if callable(filter_fn):
         pairs = filter(filter_fn, pairs)
