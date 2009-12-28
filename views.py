@@ -282,6 +282,17 @@ def indirect_horizontal_intervals(a_list):
     return intervals
 
 def strong_beat_horizontal_intervals(a_list):
+    """
+    Takes a single NoteList object.
+
+    Returns a list of tuples of the form:
+    (
+        (str: interval name, int: octaves between),
+        NoteNode: a,
+        NoteNode: b
+    )
+    For each pair of NoteNodes (a, b) that are on conse cutive downbeats.
+    """
     strong_beat_notes = sbn = [x for x in a_list if x.start[1] == 0]
 
     strong_beat_pairs = [
@@ -293,7 +304,7 @@ def strong_beat_horizontal_intervals(a_list):
     ]
 
     intervals = [
-        (mintervals.determine(a, b, True), a, b)
+        (get_interval(a, b), a, b)
         for a, b in strong_beat_pairs
     ]
 
