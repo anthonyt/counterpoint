@@ -28,38 +28,6 @@ def all_notes_line_up(a_list, b_list):
 
     return a_list, b_list
 
-
-def parallel_motion(a_list, b_list, filter_fn=None):
-    """
-    Takes two NoteList objects and an optional filter function.
-
-    The filter function, if provided, is used on the result of vertical_intervals().
-
-    Returns a list of lists.
-    Each sub-list list will contain tuples representing intervals that appear at least
-    twice.
-    Each sub-list is of the form returned by vertical_intervals().
-    """
-    pairs = vertical_intervals(a_list, b_list)
-
-
-    if callable(filter_fn):
-        pairs = filter(filter_fn, pairs)
-
-    consecutives = []
-    prev = ('0', None)
-    x = None
-    for i,cur in enumerate(pairs):
-        # cur of form ((interval, octaves), (bar, beat))
-        if cur[0] != prev[0] or (i == len(pairs) - 1):
-            if i>0 and len(x) > 1:
-                consecutives.append(x)
-            x = []
-        x.append(cur)
-        prev = cur
-
-    return consecutives
-
 def illegal_parallel_intervals(a_list, b_list):
     """
     Takes two NoteList objects.
@@ -249,7 +217,7 @@ def missed_leap_turnarounds(a_list):
     # the note following these ones need to move in opposite direction by step
     return [dirs[i+1][1] for i in invalid_leaps]
 
-def direct_motion(a_list, b_list):
+def illegal_direct_motion(a_list, b_list):
     """
     Takes two NoteList objects.
 
@@ -260,20 +228,16 @@ def direct_motion(a_list, b_list):
     approached through similar motion (ie. both voices moving in the same
     direction)
     """
-    invalid_direct_intervals = ['5', '1']
+    illegal_direct_motions = []
+    direct_motions = direct_motion(a_list, b_list)
 
-    intervals = vertical_intervals(a_list, b_list)
-    dirs = combined_directions(a_list, b_list)
+    for x in direct_motions:
+        (interval, octaves), time = x
 
-    invalid_directs = []
-    for i in range(0, len(intervals)):
-        (interval, octaves), time = intervals[i]
-        a_dir, b_dir, time = dirs[i]
+        if interval in illegal_direct_intervals:
+            illegal_direct_motions.append(x)
 
-        if interval in invalid_direct_intervals and a_dir != 0 and a_dir == b_dir:
-            invalid_directs.append(intervals[i])
-
-    return invalid_directs
+    return illegal_direct_motions
 
 def starts_with_tonic(a_list):
     """

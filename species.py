@@ -46,7 +46,7 @@ def first_species(composition):
         high_point_errors[(x, y)] = coincident_maxima(n[x], n[y])
         voice_crossing_errors[(x, y)] = voice_crossing(n[x], n[y])
         vertical_interval_errors[(x, y)] = illegal_vertical_intervals(n[x], n[y])
-        direct_motion_errors[(x, y)] = direct_motion(n[x], n[y])
+        direct_motion_errors[(x, y)] = illegal_direct_motion(n[x], n[y])
 
     return dict(
         # find errors in specific voices
@@ -176,7 +176,7 @@ def second_species(composition):
             if d not in legal_dissonances
         ]
 
-        direct_motion_errors[(x, y)] = direct_motion(n[x], n[y])
+        direct_motion_errors[(x, y)] = illegal_direct_motion(n[x], n[y])
 
         # voice crossing in the form of unison on weak beat is okay now.
         voice_crossings = voice_crossing(n[x], n[y])

@@ -277,3 +277,58 @@ def strong_beat_horizontal_intervals(a_list):
 
     return intervals
 
+def parallel_motion(a_list, b_list, filter_fn=None):
+    """
+    Takes two NoteList objects and an optional filter function.
+
+    The filter function, if provided, is used on the result of vertical_intervals().
+
+    Returns a list of lists.
+    Each sub-list list will contain tuples representing intervals that appear at least
+    twice.
+    Each sub-list is of the form returned by vertical_intervals().
+    """
+    pairs = vertical_intervals(a_list, b_list)
+
+
+    if callable(filter_fn):
+        pairs = filter(filter_fn, pairs)
+
+    consecutives = []
+    prev = ('0', None)
+    x = None
+    for i,cur in enumerate(pairs):
+        # cur of form ((interval, octaves), (bar, beat))
+        if cur[0] != prev[0] or (i == len(pairs) - 1):
+            if i>0 and len(x) > 1:
+                consecutives.append(x)
+            x = []
+        x.append(cur)
+        prev = cur
+
+    return consecutives
+
+def direct_motion(a_list, b_list):
+    """
+    Takes two NoteList objects.
+
+    Return format is identical to vertical_intervals() above.
+
+    Intervals returned here, however, only represent intervals which have been
+    approached through similar motion (ie. both voices moving in the same
+    direction)
+    """
+    invalid_direct_intervals = ['5', '1']
+
+    intervals = vertical_intervals(a_list, b_list)
+    dirs = combined_directions(a_list, b_list)
+
+    direct_motions = []
+    for i in range(0, len(intervals)):
+        a_dir, b_dir, time = dirs[i]
+
+        if a_dir != 0 and a_dir == b_dir:
+            direct_motions.append(intervals[i])
+
+    return direct_motions
+
