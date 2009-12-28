@@ -1,3 +1,10 @@
+The rules outlined below are extracted from Dr. Harald Krebs' 2-voice
+counterpoint rules at:
+http://finearts.uvic.ca/music/programs_undergrad/theory/Counterpoint%20online.pdf
+
+Rules with a - in front of them have not been implemented yet.
+Fourth Species has not been implemented yet.
+
 First Species:
 	1 voice counterpoint
 
