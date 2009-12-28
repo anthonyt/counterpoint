@@ -27,6 +27,21 @@ def get_semitones(interval_tuplet):
     """
     return mintervals.semitones_from_shorthand(interval_tuplet[0]) + 12*interval_tuplet[1]
 
+def compare_times(time_a, time_b):
+    """
+    Takes two time tuples of the form:
+        (int: bar #, float: beat #)
+
+    Returns:
+        -1 if time_a is before time_b
+         0 if they represent the same time
+         1 if time_a is after time_b
+    """
+    bar_cmp = cmp(time_a[0], time_b[0])
+    if bar_cmp != 0:
+        return bar_cmp
+    else:
+        return cmp(time_a[1], time_b[1])
 
 def note_onsets(a_list, b_list):
     """
@@ -233,30 +248,37 @@ def indirect_horizontal_intervals(a_list):
         (int: bar #, float: beat #)
     )
     """
+    # Get the extremities lists
     maxima = local_maxima(a_list)
     minima = local_minima(a_list)
+    # Combine the lists into one ordered list.
+    # We don't care if each individual onset is a maximum or a minimum, but we
+    # can be assured that no two consecutive extremities will be of the same
+    # type, as maxima and minima must alternate.
+    extremities = maxima + minima
+    extremities.sort(compare_times)
 
-    # Generate max/min pairs for all neighbouring maxima/minima
-    if maxima[0][0] > minima[0][0] \
-    or (maxima[0][0] == minima[0][0] and maxima[0][1] > minima[0][1]):
-        a = minima
-        b = maxima
-    else:
-        a = maxima
-        b = minima
-    # note that by definition, len(a)-1 <= len(b) <= len(a), as maxima and minima must alternate
-    pairs = [(x, b[i]) for i,x in enumerate(a) if i < len(b)]
-    pairs2 = [(x, b[i-1]) for i,x in enumerate(a) if i > 0 and i <= len(b)]
-    pairs.extend(pairs2)
+    # Generate tuples for all neighbouring maxima/minima
+    onset_pairs = [
+        (extremities[i], extremities[i+1])
+        for i,x in enumerate(extremities)
+        if (i+1) < len(extremities)
+    ]
 
-    intervals = []
-    for a, b in pairs:
-        x, y = a_list.get(*a), a_list.get(*b)
-        if y in [x.next_actual_note, x.prev_actual_note]:
-            # ignore 'indirect' intervals that are right beside eachother.
-            continue
-        i = mintervals.determine(x, y, True)
-        intervals.append((i, x, y))
+    # Find the actual note objects for each pair of onsets
+    note_pairs = [
+        (a_list.get(*x), a_list.get(*b))
+        for a, b in onset_pairs
+    ]
+
+    # Find the interval between the notes for each tuple
+    intervals = [
+        (get_interval(a, b), a, b)
+        for a, b in note_pairs
+        if b is not a.next_actual_note # ignore 'indirect' intervals that are
+                                       # right beside eachother.
+    ]
+
     return intervals
 
 def strong_beat_horizontal_intervals(a_list):
