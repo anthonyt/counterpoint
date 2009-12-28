@@ -157,7 +157,7 @@ def local_extremities(a_list, maxima=True):
     for cur, time in dirs:
         if cur == 0:
             continue
-        elif cur == extremity_dir:
+        elif cur == -extremity_dir:
             # This is a bit tricky.
             # If the melody starts with a rest, just looking at the directions
             # will imply that the rest is a minimum, so we must find the first
@@ -170,16 +170,16 @@ def local_extremities(a_list, maxima=True):
     prev_d = 0
     prev_t = ()
     for dir, time in dirs:
-        if prev_d == -extremity_dir:
+        if prev_d == extremity_dir:
             if dir == 0:
                 continue
-            if dir == extremity_dir:
+            if dir == -extremity_dir:
                 extremities.append(prev_t)
         prev_d = dir
         prev_t = time
 
     # ended on a low note
-    if dir == -extremity_dir:
+    if dir == extremity_dir:
         extremities.append(time)
 
     return extremities
