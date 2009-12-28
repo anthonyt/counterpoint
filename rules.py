@@ -224,10 +224,11 @@ def illegal_direct_motion(a_list, b_list):
     Return format is identical to vertical_intervals() above.
 
     Intervals returned here, however, only represent intervals explicitly
-    defined in the invalid_direct_intervals list below, which have been
+    defined in the illegal_direct_intervals list below, which have been
     approached through similar motion (ie. both voices moving in the same
     direction)
     """
+    illegal_direct_intervals = ['5', '1']
     illegal_direct_motions = []
     direct_motions = direct_motion(a_list, b_list)
 

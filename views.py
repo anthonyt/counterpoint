@@ -318,8 +318,6 @@ def direct_motion(a_list, b_list):
     approached through similar motion (ie. both voices moving in the same
     direction)
     """
-    invalid_direct_intervals = ['5', '1']
-
     intervals = vertical_intervals(a_list, b_list)
     dirs = combined_directions(a_list, b_list)
 
