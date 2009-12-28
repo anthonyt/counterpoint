@@ -18,8 +18,8 @@ def all_notes_line_up(a_list, b_list):
     b_list = [x for x in b_list if not x.is_rest] # copy NoteList to list
 
     # remove matched notes
-    for a_note in [x for x in a_list]:
-        for b_note in [y for y in b_list]:
+    for a_note in a_list[:]:
+        for b_note in b_list[:]:
             if (a_note.start, a_note.end) == (b_note.start, b_note.end):
                 # remove the matched pair from their respective lists
                 a_list.remove(a_note)
@@ -42,12 +42,10 @@ def illegal_parallel_intervals(a_list, b_list):
     allowed_parallel_intervals = ['3', '6']
     consecutives = parallel_motion(a_list, b_list)
 
-    invalid = []
-    for c in consecutives:
-        int_class = c[0][0][0]
-        if int_class not in allowed_parallel_intervals:
-            invalid.append(c)
-    return invalid
+    return [
+        c for c in consecutives
+        if c[0][0][0] not in allowed_parallel_intervals
+    ]
 
 def illegal_consecutive_parallels(a_list, b_list):
     """
@@ -160,12 +158,12 @@ def illegal_indirect_horizontal_intervals(a_list):
     """
     allowed_intervals = ['1', 'b2', '2', 'b3', '3', '4', '5', 'b6', '6']
     intervals = indirect_horizontal_intervals(a_list)
-    return filter(lambda x: x[0] not in allowed_intervals, intervals)
+    return [x for x in intervals if x[0][0] not in allowed_intervals]
 
 def illegal_strong_beat_horizontal_intervals(a_list):
     allowed_intervals = ['1', 'b2', '2', 'b3', '3', '4', '5', 'b6', '6']
     intervals = strong_beat_horizontal_intervals(a_list)
-    return filter(lambda x: x[0] not in allowed_intervals, intervals)
+    return [x for x in intervals if x[0][0] not in allowed_intervals]
 
 def missed_leap_turnarounds(a_list):
     """
