@@ -75,6 +75,19 @@ First Species:
 		use more (m3, M3, m6, M6) than (P5, P8)
 
 
+test cases:
+	melody that with directions
+		-1 0 0 -1 and
+		 1 0 0  1
+	make sure that plateaus don't confuse the maxima / minima functions
+
+problems encountered:
+	representing multiple hierarchies with same objects without destroying mingus framework
+	representing minor keys within the mingus framework
+
+
+
+
 
 
 Second Species:

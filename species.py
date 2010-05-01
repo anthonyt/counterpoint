@@ -170,10 +170,10 @@ def second_species(composition):
 
         # second species has different rules for vertical intervals
         dissonances = illegal_vertical_intervals(n[x], n[y])
-        legal_dissonances = legal_dissonances(n[x], n[y])
+        legal_dissonance = legal_dissonances(n[x], n[y])
         vertical_interval_errors[(x, y)] = [
             d for d in dissonances
-            if d not in legal_dissonances
+            if d not in legal_dissonance
         ]
 
         direct_motion_errors[(x, y)] = illegal_direct_motion(n[x], n[y])

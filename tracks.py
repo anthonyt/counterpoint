@@ -140,8 +140,7 @@ second_species_harm_1_sop = [
     ('C-5', 1)
 ]
 
-"""
-SECOND SPECIES EXAMPLE: Uncomment this block to test second species functionality.
+#SECOND SPECIES EXAMPLE: Uncomment this block to test second species functionality.
 melodies = {
     'Soprano': second_species_harm_1_sop,
     'Alto': second_species_cf_1_alto,
@@ -149,4 +148,3 @@ melodies = {
     'Bass': []
 }
 species = 2
-"""
