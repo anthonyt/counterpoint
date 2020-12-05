@@ -80,7 +80,7 @@ def vertical_intervals(a_list, b_list):
         for bar, beat in changes
     ]
 
-    return zip(intervals, changes)
+    return list(zip(intervals, changes))
 
 def directions(a_list):
     """
@@ -324,7 +324,7 @@ def parallel_motion(a_list, b_list, filter_fn=None):
     pairs = vertical_intervals(a_list, b_list)
 
     if callable(filter_fn):
-        pairs = filter(filter_fn, pairs)
+        pairs = list(filter(filter_fn, pairs))
 
     consecutives = []
     prev = ('0', None)

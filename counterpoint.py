@@ -95,8 +95,8 @@ def main():
         composition, errors = setup_midi(options.input_midi_file)
 
     if errors:
-        print >> sys.stderr, '%s: ERROR(S) ENCOUNTERED WHEN READING MUSIC:' % sys.argv[0]
-        print >> sys.stderr, '\n'.join(errors)
+        print('%s: ERROR(S) ENCOUNTERED WHEN READING MUSIC:' % sys.argv[0], file=sys.stderr)
+        print('\n'.join(errors), file=sys.stderr)
         sys.exit(1)
     elif composition is None:
         parser.error('Insufficient arguments provided. Use the -h argument to display help.')
@@ -111,11 +111,11 @@ def main():
 
     # Print out the standardized errors, and their corresponding rules.
     for error in errors:
-        print get_error_text(error)
+        print(get_error_text(error))
         rule = error[-1]
         if rule in written_rules:
-            print "Rule:", written_rules[rule]
-        print ""
+            print("Rule:", written_rules[rule])
+        print("")
 
 
     if options.png_file:

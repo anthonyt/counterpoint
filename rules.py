@@ -98,7 +98,7 @@ def voice_crossing(b_list, a_list, note_spacing=2, note_filter_fn=None):
     def f_v_c(c_list, d_list, comparator):
         c_notes = [c for c in c_list]
         if callable(note_filter_fn):
-            c_notes = filter(note_filter_fn, c_notes)
+            c_notes = list(filter(note_filter_fn, c_notes))
         d_notes = [d_list.get_note_playing_at(c.bar, c.beat) for c in c_notes]
 
         for x in range(0, note_spacing):

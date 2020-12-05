@@ -3,22 +3,22 @@ from mingus.containers import Note, NoteContainer, Bar, Composition, Instrument,
 
 # Set up our vocal classes
 class Soprano(Instrument):
-    name = u'Soprano'
+    name = 'Soprano'
     range = (Note('C', 4), Note('C', 6))
     clef = 'treble'
 
 class Alto(Instrument):
-    name = u'Alto'
+    name = 'Alto'
     range = (Note('F', 3), Note('F', 5))
     clef = 'treble'
 
 class Tenor(Instrument):
-    name = u'Tenor'
+    name = 'Tenor'
     range = (Note('C', 3), Note('C', 5))
     clef = 'tenor'
 
 class Bass(Instrument):
-    name = u'Bass'
+    name = 'Bass'
     range = (Note('E', 2), Note('E', 4))
     clef = 'bass'
 
