@@ -17,7 +17,7 @@ def get_interval(note_a, note_b):
         octave = 0
     else:
         name = mintervals.determine(note_a, note_b, True)
-        octave = abs(int(note_a) - int(note_b))/12
+        octave = abs(int(note_a) - int(note_b))//12
     return (name, octave)
 
 def get_semitones(interval_tuplet):
@@ -26,22 +26,6 @@ def get_semitones(interval_tuplet):
     Returns an int representing the semitones within the interval.
     """
     return mintervals.semitones_from_shorthand(interval_tuplet[0]) + 12*interval_tuplet[1]
-
-def compare_times(time_a, time_b):
-    """
-    Takes two time tuples of the form:
-        (int: bar #, float: beat #)
-
-    Returns:
-        -1 if time_a is before time_b
-         0 if they represent the same time
-         1 if time_a is after time_b
-    """
-    bar_cmp = cmp(time_a[0], time_b[0])
-    if bar_cmp != 0:
-        return bar_cmp
-    else:
-        return cmp(time_a[1], time_b[1])
 
 def note_onsets(a_list, b_list):
     """
@@ -109,7 +93,7 @@ def directions(a_list):
         elif note.prev_actual_note is None:
             direction = 0
         else:
-            direction = cmp(int(note), int(note.prev_actual_note))
+            direction = note.__cmp__(note.prev_actual_note)
         return direction
 
     directions = []
@@ -256,7 +240,7 @@ def indirect_horizontal_intervals(a_list):
     # can be assured that no two consecutive extremities will be of the same
     # type, as maxima and minima must alternate.
     extremities = maxima + minima
-    extremities.sort(compare_times)
+    extremities.sort()
 
     # Generate tuples for all neighbouring maxima/minima
     onset_pairs = [
@@ -264,6 +248,8 @@ def indirect_horizontal_intervals(a_list):
         for i,x in enumerate(extremities)
         if (i+1) < len(extremities)
     ]
+
+    x = extremities[-1]
 
     # Find the actual note objects for each pair of onsets
     note_pairs = [
