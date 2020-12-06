@@ -249,11 +249,9 @@ def indirect_horizontal_intervals(a_list):
         if (i+1) < len(extremities)
     ]
 
-    x = extremities[-1]
-
     # Find the actual note objects for each pair of onsets
     note_pairs = [
-        (a_list.get(*x), a_list.get(*b))
+        (a_list.get(*a), a_list.get(*b))
         for a, b in onset_pairs
     ]
 
