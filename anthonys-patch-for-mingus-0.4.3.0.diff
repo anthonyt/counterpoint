@@ -141,7 +141,7 @@ index c54d5f2..e7f83d8 100644
      def __init__(self):
          Instrument.__init__(self)
 diff --git a/mingus/containers/Note.py b/mingus/containers/Note.py
-index d76e86e..370fbf5 100644
+index d76e86e..a0b0549 100644
 --- a/mingus/containers/Note.py
 +++ b/mingus/containers/Note.py
 @@ -173,6 +173,7 @@ octave."""
@@ -152,6 +152,20 @@ index d76e86e..370fbf5 100644
  
      def from_int(self, integer):
          """Sets the Note corresponding to the integer. 0 is a C on octave 0, 12 is \
+@@ -321,6 +322,13 @@ False
+         else:
+             return 0
+ 
++    def __eq__(self, other): return self.__cmp__(other) == 0
++    def __ne__(self, other): return self.__cmp__(other) != 0
++    def __lt__(self, other): return self.__cmp__(other) < 0
++    def __le__(self, other): return self.__cmp__(other) <= 0
++    def __gt__(self, other): return self.__cmp__(other) > 0
++    def __ge__(self, other): return self.__cmp__(other) >= 0
++
+     def __repr__(self):
+         """A helpful representation for printing Note classes"""
+ 
 diff --git a/mingus/core/intervals.py b/mingus/core/intervals.py
 index 7803047..2bf3fbb 100644
 --- a/mingus/core/intervals.py
@@ -556,3 +570,18 @@ index 2f5d054..53e3569 100644
          l = self.int_to_varbyte(len(name))
          return '\x00' + META_EVENT + TRACK_NAME + l + name
  
+diff --git a/mingus/midi/__init__.py b/mingus/midi/__init__.py
+index c843d4d..7bbffc2 100644
+--- a/mingus/midi/__init__.py
++++ b/mingus/midi/__init__.py
+@@ -23,8 +23,8 @@
+ ================================================================================
+ """
+ 
+-from Sequencer import Sequencer
+-from SequencerObserver import SequencerObserver
++from mingus.midi.Sequencer import Sequencer
++from mingus.midi.SequencerObserver import SequencerObserver
+ __all__ = [
+     'Sequencer',
+     'SequencerObserver',
